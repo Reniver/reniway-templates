@@ -1,0 +1,453 @@
+remove: false
+opcua:
+  nodes:
+  - id: 13
+    browseName: 0:Root
+    displayName: Root
+    typeDefinition: 0:FolderType
+    referenceType: 0:HasComponent
+    children:
+    - id: 14
+      browseName: 0:Objects
+      displayName: Objects
+      typeDefinition: 0:FolderType
+      referenceType: 0:HasComponent
+      children:
+      - id: 15
+        browseName: 11:NCMachines
+        displayName: NCMachines
+        typeDefinition: 0:FolderType
+        children:
+        - id: 16
+          browseName: 2:iTNC530
+          displayName: iTNC530
+          typeDefinition: 11:HeidenhainNCType
+          referenceType: 0:HasComponent
+          newInsanceIfExists: true
+          children:
+          - id: 0
+            browseName: 11:State
+            displayName: State
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:String
+            children: []
+          - id: 1
+            browseName: 11:SpeedOverride
+            displayName: SpeedOverride
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:Int32
+            children: []
+          - id: 2
+            browseName: 11:SIK
+            displayName: SIK
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:String
+            children: []
+          - id: 3
+            browseName: 11:RapidOverride
+            displayName: RapidOverride
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:Int32
+            children: []
+          - id: 4
+            browseName: 11:ProgramStatus
+            displayName: ProgramStatus
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:String
+            children: []
+          - id: 5
+            browseName: 11:ProgramPosition
+            displayName: ProgramPosition
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 11:ProgramPositionDataType
+            children: []
+          - id: 6
+            browseName: 11:NCUptime
+            displayName: NCUptime
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:Int32
+            children: []
+          - id: 7
+            browseName: 11:MachineUptime
+            displayName: MachineUptime
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:Int32
+            children: []
+          - id: 8
+            browseName: 11:MachineRunningTime
+            displayName: MachineRunningTime
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:Int32
+            children: []
+          - id: 9
+            browseName: 11:FeedOverride
+            displayName: FeedOverride
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:Int32
+            children: []
+          - id: 10
+            browseName: 11:ExecutionMode
+            displayName: ExecutionMode
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:String
+            children: []
+          - id: 11
+            browseName: 11:Errors
+            displayName: Errors
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 11:ErrorType
+            children: []
+          - id: 12
+            browseName: 11:CutterLocations
+            displayName: CutterLocations
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 11:CutterLocationDataType
+            children: []
+          - id: 17
+            browseName: 11:CurrentCall
+            displayName: CurrentCall
+            typeDefinition: 0:BaseDataVariableType
+            referenceType: 0:HasComponent
+            dataType: 0:String
+            children: []
+  namespaces:
+  - id: 0
+    uri: http://opcfoundation.org/UA/
+  - id: 2
+    uri: http://reniver.eu/UA/Reniway/Instance
+  - id: 11
+    uri: http://reniver.eu/UA/NC
+connectors:
+- id: 38
+  name: iTNC530
+  properties:
+  - id: 189
+    name: Status
+    measurementDateTime: 2026-02-12T08:49:47.2356292Z
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 190
+    name: Execution Mode
+    measurementDateTime: 2026-02-09T16:22:09.4453869Z
+    address: ExecutionMode
+    direction: Input
+    type: string
+    order: 3
+    isSystemProperty: false
+    isPermanent: false
+  - id: 204
+    name: Errors
+    measurementDateTime: 2026-02-12T08:49:48.3906095Z
+    address: Errors
+    direction: Input
+    type: json[]
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 191
+    name: Current Call
+    measurementDateTime: 2026-01-28T13:54:43.0909269Z
+    address: CurrentCall
+    direction: Input
+    type: string
+    order: 2
+    isSystemProperty: false
+    isPermanent: false
+  - id: 193
+    name: Program Status
+    measurementDateTime: 2026-02-10T03:36:11.2829424Z
+    address: ProgramStatus
+    direction: Input
+    type: string
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  - id: 192
+    name: Feed Override
+    measurementDateTime: 2026-02-11T05:26:41.0763049Z
+    address: FeedOverride
+    direction: Input
+    type: int
+    order: 8
+    isSystemProperty: false
+    isPermanent: false
+  - id: 492
+    name: Cutter Locations
+    measurementDateTime: 2026-02-12T10:41:45.0877140Z
+    address: CutterLocations
+    direction: Input
+    type: json
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  - id: 493
+    name: Speed Override
+    address: SpeedOverride
+    direction: Input
+    type: int
+    order: 7
+    isSystemProperty: false
+    isPermanent: false
+  - id: 494
+    name: Machine Running Time
+    measurementDateTime: 2026-02-12T10:42:52.8173844Z
+    address: MachineRunningTime
+    direction: Input
+    type: int
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 495
+    name: Machine Uptime
+    measurementDateTime: 2026-02-12T10:48:39.4286718Z
+    address: MachineUptime
+    direction: Input
+    type: int
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  - id: 496
+    name: NC Uptime
+    measurementDateTime: 2026-02-12T10:48:19.2234524Z
+    address: NcUptime
+    direction: Input
+    type: int
+    order: 13
+    isSystemProperty: false
+    isPermanent: false
+  - id: 497
+    name: Program Position
+    address: ProgramPosition
+    direction: Input
+    type: json[]
+    order: 5
+    isSystemProperty: false
+    isPermanent: false
+  - id: 498
+    name: Rapid Override
+    address: RapidOverride
+    direction: Input
+    type: int
+    order: 6
+    isSystemProperty: false
+    isPermanent: false
+  - id: 499
+    name: SIK
+    address: Sik
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 500
+    name: State
+    address: State
+    direction: Input
+    type: string
+    order: 1
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: host
+    value: 0.0.0.0
+    description: IP address of the machine.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: dncType
+    value: ITNC
+    description: The type of the DNC to connect to.
+    settingType: Select
+    optionsSerialized: '["ATEKM","ITNC","MILLPLUS","MILLPLUSIT","TURNPLUS","MILLPLUSIT_NCK","MANUALPLUS_NCK","ATEKM_NCK","TNC320_NCK","GRINDPLUS_NCK","TNC6xx_NCK","AR6000_NCK","CNCPILOT6xx_NCK","TNC128_NCK","GRINDPLUS640_NCK"]'
+    options:
+    - ATEKM
+    - ITNC
+    - MILLPLUS
+    - MILLPLUSIT
+    - TURNPLUS
+    - MILLPLUSIT_NCK
+    - MANUALPLUS_NCK
+    - ATEKM_NCK
+    - TNC320_NCK
+    - GRINDPLUS_NCK
+    - TNC6xx_NCK
+    - AR6000_NCK
+    - CNCPILOT6xx_NCK
+    - TNC128_NCK
+    - GRINDPLUS640_NCK
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: HEIDENHAIN
+  connectorCategoryType: Field
+- id: 68
+  name: OPC UA Server
+  properties:
+  - id: 467
+    name: Status
+    measurementDateTime: 2026-02-12T08:25:23.1339269Z
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 468
+    name: CurrentCall
+    measurementDateTime: 2026-02-12T10:47:22.8217364Z
+    valueFromConnectorPropertyId: 191
+    nodeId: 17
+    direction: Output
+    type: string
+    order: 2
+    isSystemProperty: false
+    isPermanent: false
+  - id: 469
+    name: CutterLocations
+    measurementDateTime: 2026-02-12T10:46:42.1355456Z
+    valueFromConnectorPropertyId: 492
+    nodeId: 12
+    direction: Output
+    type: json
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  - id: 470
+    name: Errors
+    measurementDateTime: 2026-02-12T10:46:34.3009580Z
+    valueFromConnectorPropertyId: 204
+    nodeId: 11
+    direction: Output
+    type: json
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 471
+    name: ExecutionMode
+    measurementDateTime: 2026-02-12T10:46:52.9619492Z
+    valueFromConnectorPropertyId: 190
+    nodeId: 10
+    direction: Output
+    type: string
+    order: 3
+    isSystemProperty: false
+    isPermanent: false
+  - id: 472
+    name: FeedOverride
+    measurementDateTime: 2026-02-12T10:46:49.0791307Z
+    valueFromConnectorPropertyId: 192
+    nodeId: 9
+    direction: Output
+    type: int
+    order: 8
+    isSystemProperty: false
+    isPermanent: false
+  - id: 473
+    name: MachineRunningTime
+    measurementDateTime: 2026-02-12T10:46:39.1934318Z
+    valueFromConnectorPropertyId: 494
+    nodeId: 8
+    direction: Output
+    type: int
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 474
+    name: MachineUptime
+    measurementDateTime: 2026-02-12T10:48:39.4299296Z
+    valueFromConnectorPropertyId: 495
+    nodeId: 7
+    direction: Output
+    type: int
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  - id: 475
+    name: NCUptime
+    measurementDateTime: 2026-02-12T10:48:19.2241052Z
+    valueFromConnectorPropertyId: 496
+    nodeId: 6
+    direction: Output
+    type: int
+    order: 13
+    isSystemProperty: false
+    isPermanent: false
+  - id: 476
+    name: ProgramPosition
+    valueFromConnectorPropertyId: 497
+    nodeId: 5
+    direction: Output
+    type: json
+    order: 5
+    isSystemProperty: false
+    isPermanent: false
+  - id: 477
+    name: ProgramStatus
+    measurementDateTime: 2026-02-12T10:46:51.3066979Z
+    valueFromConnectorPropertyId: 193
+    nodeId: 4
+    direction: Output
+    type: string
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  - id: 478
+    name: RapidOverride
+    valueFromConnectorPropertyId: 498
+    nodeId: 3
+    direction: Output
+    type: int
+    order: 6
+    isSystemProperty: false
+    isPermanent: false
+  - id: 479
+    name: SIK
+    valueFromConnectorPropertyId: 499
+    nodeId: 2
+    direction: Output
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 480
+    name: SpeedOverride
+    valueFromConnectorPropertyId: 493
+    nodeId: 1
+    direction: Output
+    type: int
+    order: 7
+    isSystemProperty: false
+    isPermanent: false
+  - id: 481
+    name: State
+    valueFromConnectorPropertyId: 500
+    nodeId: 0
+    direction: Output
+    type: string
+    order: 1
+    isSystemProperty: false
+    isPermanent: false
+  settings: []
+  startup: false
+  type: ReniwayOPCUA
+  connectorCategoryType: Enterprise
+dataMappers: []
