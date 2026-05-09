@@ -1,0 +1,659 @@
+remove: false
+labels:
+  - Machine Name : "Enter a unique name for your machine"
+  - Machine Model : "Model Number of the machine"
+  - Machine Manufacturer : "Manufacturer of the machine"
+  - Machine Url : "Enter the Machine URL (ip/hostname)"
+  - Database Url : "Enter the database URL (ip/hostname)"
+  - Database Name : "Enter the database name"
+  - Database User : "Enter the database username"
+  - Database Password : "Enter the database password"
+connectors:
+- id: 4
+  name: TimescaleDB
+  properties:
+  - id: 5
+    name: Status
+    measurementDateTime: 2026-05-08T14:21:38.4406926Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 65
+    name: ${Machine Name} - Machine
+    propertyLinks:
+    - id: 4
+      targetBridgePropertyId: 65
+      sourceDataMapperPropertyId: 17
+    retain: false
+    queryString: >-
+      INSERT INTO machines VALUES (@Serial, @Name, @Protocol, @Model, @Manufacturer)
+
+      ON CONFLICT (serial) DO UPDATE
+
+      SET
+          name = EXCLUDED.name,
+          protocol = EXCLUDED.protocol,
+          model = EXCLUDED.model,
+          manufacturer = EXCLUDED.manufacturer;
+    parameters: '{"Serial":"Text","Name":"Text","Protocol":"Text","Model":"Text","Manufacturer":"Text"}'
+    direction: Output
+    type: json
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 73
+    name: ${Machine Name} - ObservationLog
+    propertyLinks:
+    - id: 5
+      targetBridgePropertyId: 73
+      sourceDataMapperPropertyId: 20
+    retain: false
+    queryString: >
+      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+    parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
+    direction: Output
+    type: json
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  - id: 74
+    name: ${Machine Name} - OverrideLog
+    propertyLinks:
+    - id: 6
+      targetBridgePropertyId: 74
+      sourceDataMapperPropertyId: 24
+    retain: false
+    queryString: INSERT INTO override_log VALUES (@Serial, NOW(), @Feed, @Speed, @Rapid);
+    parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
+    direction: Output
+    type: json
+    order: 13
+    isSystemProperty: false
+    isPermanent: false
+  - id: 75
+    name: ${Machine Name} - ProgramDataLog
+    propertyLinks:
+    - id: 7
+      targetBridgePropertyId: 75
+      sourceDataMapperPropertyId: 69
+    retain: false
+    queryString: INSERT INTO program_data_log VALUES (@Serial, NOW(), @ProgramName, @ProgramState::program_state, @CycleTime);
+    parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
+    direction: Output
+    type: json
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 76
+    name: ${Machine Name} - AlarmLog
+    propertyLinks:
+    - id: 8
+      targetBridgePropertyId: 76
+      sourceDataMapperPropertyId: 26
+    retain: false
+    queryString: >+
+      SELECT insert_alarms(
+          @Serial,
+          @Alarms
+      );
+
+    parameters: '{"Serial":"Text","Alarms":"Jsonb"}'
+    direction: Output
+    type: json
+    order: 14
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: databaseType
+    value: PostgreSQL
+    description: ''
+    settingType: Select
+    optionsSerialized: '["PostgreSQL","MySQL","MSSQL"]'
+    options:
+    - PostgreSQL
+    - MySQL
+    - MSSQL
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: host
+    value: ${Database Url}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: 5432
+    description: ''
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: ${Database User}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: password
+    value: ${Database Password}
+    description: ''
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: database
+    value: ${Database Name}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: commandTimeout
+    value: 10
+    description: Time to wait (in seconds) before canceling a command. Set to 0 to disable.
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: extra
+    value: ''
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: SQL
+  connectorCategoryType: Enterprise
+- id: 13
+  name: ${Machine Name} - iTNC530
+  properties:
+  - id: 31
+    name: Status
+    measurementDateTime: 2026-05-08T14:16:24.2933612Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 32
+    name: Execution Mode
+    propertyLinks: []
+    address: ExecutionMode
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 33
+    name: State
+    propertyLinks: []
+    address: State
+    direction: Input
+    type: string
+    order: 2
+    isSystemProperty: false
+    isPermanent: false
+  - id: 34
+    name: Machine Running Time
+    propertyLinks: []
+    address: MachineRunningTime
+    direction: Input
+    type: int
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 40
+    name: SIK
+    propertyLinks: []
+    address: Sik
+    direction: Input
+    type: string
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  - id: 45
+    name: Program Status
+    propertyLinks: []
+    address: ProgramStatus
+    direction: Input
+    type: string
+    order: 3
+    isSystemProperty: false
+    isPermanent: false
+  - id: 47
+    name: Program Position
+    propertyLinks: []
+    address: ProgramPosition
+    direction: Input
+    type: json[]
+    order: 5
+    isSystemProperty: false
+    isPermanent: false
+  - id: 48
+    name: Current Call
+    propertyLinks: []
+    address: CurrentCall
+    direction: Input
+    type: string
+    order: 6
+    isSystemProperty: false
+    isPermanent: false
+  - id: 60
+    name: Feed Override
+    propertyLinks: []
+    address: FeedOverride
+    direction: Input
+    type: int
+    order: 7
+    isSystemProperty: false
+    isPermanent: false
+  - id: 61
+    name: Speed Override
+    propertyLinks: []
+    address: SpeedOverride
+    direction: Input
+    type: int
+    order: 8
+    isSystemProperty: false
+    isPermanent: false
+  - id: 62
+    name: Rapid Override
+    propertyLinks: []
+    address: RapidOverride
+    direction: Input
+    type: int
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  - id: 63
+    name: Errors
+    propertyLinks: []
+    address: Errors
+    direction: Input
+    type: json[]
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 315
+    name: COM Interface Version
+    propertyLinks: []
+    address: ComInterfaceVersion
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: host
+    value: ${Machine Url}
+    description: IP address of the machine.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: dncType
+    value: ITNC
+    description: The type of the DNC to connect to.
+    settingType: Select
+    optionsSerialized: '["ATEKM","ITNC","MILLPLUS","MILLPLUSIT","TURNPLUS","MILLPLUSIT_NCK","MANUALPLUS_NCK","ATEKM_NCK","TNC320_NCK","GRINDPLUS_NCK","TNC6xx_NCK","AR6000_NCK","CNCPILOT6xx_NCK","TNC128_NCK","GRINDPLUS640_NCK"]'
+    options:
+    - ATEKM
+    - ITNC
+    - MILLPLUS
+    - MILLPLUSIT
+    - TURNPLUS
+    - MILLPLUSIT_NCK
+    - MANUALPLUS_NCK
+    - ATEKM_NCK
+    - TNC320_NCK
+    - GRINDPLUS_NCK
+    - TNC6xx_NCK
+    - AR6000_NCK
+    - CNCPILOT6xx_NCK
+    - TNC128_NCK
+    - GRINDPLUS640_NCK
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: user
+    description: Username for the HEIDENHAIN GRPC connection.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: password
+    value: user
+    description: Password for the HEIDENHAIN GRPC connection.
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: secure
+    value: false
+    description: Enable secure HEIDENHAIN GRPC connection.
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: HEIDENHAIN
+  connectorCategoryType: Field
+dataMappers:
+- id: 2
+  name: ${Machine Name} - Mapper
+  properties:
+  - id: 16
+    name: SIK
+    propertyLinks:
+    - id: 83
+      targetDataMapperPropertyId: 16
+      sourceBridgePropertyId: 40
+    type: string
+    order: 4
+  - id: 17
+    name: Insert Machine
+    propertyLinks: []
+    transformationCodeBody: >-
+      const SIK = msg.payload[16]
+
+
+      let result = SIK;
+
+
+      return {
+          value: {
+              'Serial': result,
+              'Name': '${Machine Name}',
+              'Protocol': 'HEIDENHAIN DNC',
+              'Model': '${Machine Model}',
+              'Manufacturer': '${Machine Manufacturer}'
+          }
+      }
+    type: json
+    order: 13
+  - id: 18
+    name: State
+    propertyLinks:
+    - id: 84
+      targetDataMapperPropertyId: 18
+      sourceBridgePropertyId: 33
+    type: string
+    order: 2
+  - id: 19
+    name: Execution Mode
+    propertyLinks:
+    - id: 85
+      targetDataMapperPropertyId: 19
+      sourceBridgePropertyId: 32
+    type: string
+    order: 0
+  - id: 20
+    name: Insert Observation
+    propertyLinks: []
+    transformationCodeBody: >-
+      const SIK = msg.payload[16]
+
+      const State = msg.payload[18]
+
+      const ExecutionMode = msg.payload[19]
+
+
+      let mode = 'Other';
+
+      switch (ExecutionMode) {
+          case 'DNC_EXEC_MANUAL': 
+              mode = "Manual";
+              break;
+          case 'DNC_EXEC_MDI':
+              mode = "MDI";
+              break;
+          case 'DNC_EXEC_RPF':
+              mode = "RFP";
+              break;
+          case 'DNC_EXEC_SINGLESTEP':
+              mode = "SingleStep";
+              break;
+          case 'DNC_EXEC_AUTOMATIC':
+              mode = "Automatic";
+              break;
+          case 'DNC_EXEC_OTHER':
+          case 'DNC_EXEC_SIMULO_TURBO_DEPRECATED':
+              mode = "Other";
+              break;
+          case 'DNC_EXEC_HANDWHEEL':
+              mode = "Handwheel";
+      }
+
+
+      let mstate = "NotConnected";
+
+      switch (State) {
+          case 'DNC_EVT_STATE_HOST_NOT_AVAILABLE':
+              mstate = "NotConnected";
+              break;
+          case 'DNC_EVT_STATE_HOST_AVAILABLE':
+          case 'DNC_EVT_STATE_WAIT_PERMISSION':
+          case 'DNC_EVT_STATE_DNC_AVAILABLE':
+              mstate = "Connected";
+              break;
+          case 'DNC_EVT_STATE_MACHINE_BOOTED':
+              mstate = "Booted";
+              break;
+          case 'DNC_EVT_STATE_MACHINE_INITIALIZING':
+              state = "Initializing";
+              break;
+          case 'DNC_EVT_STATE_MACHINE_AVAILABLE':
+              mstate = "Available";
+              break;
+          case 'DNC_EVT_STATE_MACHINE_SHUTTING_DOWN':
+              mstate = "ShuttingDown";
+              break;
+          case 'DNC_EVT_STATE_DNC_STOPPED':
+          case 'DNC_EVT_STATE_HOST_STOPPED':
+          case 'DNC_EVT_STATE_CONNECTION_LOST':
+          case 'DNC_EVT_STATE_PERMISSION_DENIED':
+          case 'DNC_EVT_STATE_NOT_INITIALIZED':
+              mstate = 'NotConnected';
+      }
+
+
+
+      return {
+          value: {
+              'Serial': SIK,
+              'Mode': mode,
+              'State': mstate
+          }
+      }
+    type: json
+    order: 15
+  - id: 21
+    name: Feed Override
+    propertyLinks:
+    - id: 86
+      targetDataMapperPropertyId: 21
+      sourceBridgePropertyId: 60
+    type: int
+    order: 7
+  - id: 22
+    name: Speed Override
+    propertyLinks:
+    - id: 87
+      targetDataMapperPropertyId: 22
+      sourceBridgePropertyId: 61
+    type: int
+    order: 8
+  - id: 23
+    name: Rapid Override
+    propertyLinks:
+    - id: 88
+      targetDataMapperPropertyId: 23
+      sourceBridgePropertyId: 62
+    type: int
+    order: 9
+  - id: 24
+    name: Insert Overrides
+    propertyLinks: []
+    transformationCodeBody: >-
+      const SIK = msg.payload[16]
+
+      const FeedOverride = parseInt(msg.payload[21])
+
+      const SpeedOverride = parseInt(msg.payload[22])
+
+      const RapidOverride = parseInt(msg.payload[23])
+
+
+      return {
+          value: {
+              'Serial': SIK,
+              'Feed': FeedOverride,
+              'Speed': SpeedOverride,
+              'Rapid': RapidOverride
+          }
+      }
+    type: json
+    order: 16
+  - id: 25
+    name: Errors
+    propertyLinks:
+    - id: 89
+      targetDataMapperPropertyId: 25
+      sourceBridgePropertyId: 63
+    type: json[]
+    order: 10
+  - id: 26
+    name: Insert Alarms
+    propertyLinks: []
+    transformationCodeBody: >-
+      const SIK = msg.payload[16]
+
+      const Errors = msg.payload[25]
+
+
+      convertSeverity = (severity) => {
+          switch (severity) {
+              case 0: return 1;
+              case 1: return 400;
+              case 2: return 500;
+              case 3: return 600;
+              case 4: return 700;
+              case 5: return 800;
+              case 6: return 900;
+              case 7: return 200;
+              case 8: return 400;
+              case 9: return 100;
+          }
+      }; 
+
+
+      convertTimestamp = (timeStamp) => {
+          const nanosAsMillis = Math.floor(timeStamp.Nanos / 1000000);
+          const totalMillis = (timeStamp.Seconds * 1000) + nanosAsMillis;
+          return new Date(totalMillis);
+      }
+
+
+      let errors = JSON.parse(Errors).map(x => {
+          return {
+              'Code': x.NumberAsText,
+              'Message': x.Text,
+              'Source': x.Internals,
+              'Severity': convertSeverity(x.Class),
+              'Time': convertTimestamp(x.TimeStamp),
+          }
+      })
+
+
+      return {
+          value: {
+              "Serial": SIK,
+              "Alarms": errors
+          }
+      }
+    type: json
+    order: 17
+  - id: 35
+    name: Program Status
+    propertyLinks:
+    - id: 94
+      targetDataMapperPropertyId: 35
+      sourceBridgePropertyId: 45
+    type: string
+    order: 3
+  - id: 36
+    name: Program Position
+    propertyLinks:
+    - id: 95
+      targetDataMapperPropertyId: 36
+      sourceBridgePropertyId: 47
+    type: json[]
+    order: 5
+  - id: 59
+    name: Current Call
+    propertyLinks:
+    - id: 109
+      targetDataMapperPropertyId: 59
+      sourceBridgePropertyId: 48
+    type: string
+    order: 6
+  - id: 67
+    name: Status
+    propertyLinks:
+    - id: 0
+      sourceBridgePropertyId: 31
+    type: string
+    order: 12
+  - id: 68
+    name: Machine Running Time
+    propertyLinks:
+    - id: 111
+      targetDataMapperPropertyId: 68
+      sourceBridgePropertyId: 34
+    type: int
+    order: 11
+  - id: 69
+    name: Program Data Log
+    propertyLinks: []
+    transformationCodeBody: "const Program_Status = msg.payload[35]\nconst SIK = msg.payload[16]\nconst Program_Position = msg.payload[36]\nconst Status = msg.payload[67]\n\nconsole.log(Program_Status);\n\n// Helper: convert program status to human-readable form\nfunction parseProgramStatus(status) {\n    if( Status === 'Started') {\n        if (!status) return \"Unknown\";\n        return status\n            .replace(/^DNC_PRG_STS_/, \"\")   // remove prefix if present\n            .toLowerCase()\n            .replace(/_/g, ' ')\n            .replace(/\\b\\w/g, c => c.toUpperCase());\n        \n    } else {\n        return \"Unknown\";\n    }\n}\n\n// Robust helper: extract program name from many possible input shapes\nfunction extractProgramName(pos) {\n    try {\n        // Normalize input\n        let candidate = pos;\n\n        // If it's a string, try to parse JSON; otherwise keep the string\n        if (typeof candidate === 'string') {\n            try {\n                candidate = JSON.parse(candidate);\n            } catch (e) {\n                // keep as string\n            }\n        }\n\n        // Determine programPath\n        let programPath;\n        if (Array.isArray(candidate)) {\n            // New logic: Map over the array to get all ProgramName properties and join them with a '/'\n            programPath = candidate.map(item => {\n                let format_name = item.ProgramName.split(/[/\\\\]+/).pop();\n                return item && format_name;\n                }).join(' | ');\n        } else if (candidate && typeof candidate === 'object' && candidate.ProgramName) {\n            programPath = candidate.ProgramName;\n        } else if (typeof candidate === 'string') {\n            // Remove wrapping quotes if present (e.g. \"\\\"[...]\"\")\n            let maybe = candidate.trim();\n            if (maybe.length >= 2 && maybe[0] === '\"' && maybe[maybe.length - 1] === '\"') {\n                maybe = maybe.slice(1, -1);\n            }\n            // Try parse that snippet as JSON (in case it's a JSON stringified array)\n            try {\n                const parsed = JSON.parse(maybe);\n                if (Array.isArray(parsed) && parsed[0] && parsed[0].ProgramName) {\n                    // New logic for parsed array: Map and join\n                    programPath = parsed.map(item => item && item.ProgramName).join('/');\n                } else {\n                    programPath = maybe;\n                }\n            } catch (e) {\n                programPath = maybe;\n            }\n        }\n\n        if (!programPath) return \"Unknown\";\n\n        // Unescape double backslashes (\\\\\\\\ -> \\\\ -> \\)\n        programPath = programPath.replace(/\\\\\\\\/g, \"\\\\\");\n        // Split on both forward and back slashes and take the last segment\n        const file = programPath.split(/[/\\\\]+/).pop();\n        if (!file) return \"Unknown\";\n        // Strip extension if present\n        return file;\n    } catch (e) {\n        return \"Unknown\";\n    }\n}\n\nconst readableStatus = parseProgramStatus(Program_Status);\nconst programName = extractProgramName(Program_Position);\n\n// Return the exact shape you asked for\nreturn {\n    value: {\n        Serial: SIK,\n        ProgramName: programName,\n        ProgramState: readableStatus,\n        CycleTime: 0\n    }\n};\n"
+    type: json
+    order: 14
+  - id: 362
+    name: COM Interface Version
+    propertyLinks:
+    - id: 188
+      targetDataMapperPropertyId: 362
+      sourceBridgePropertyId: 315
+    type: string
+    order: 1

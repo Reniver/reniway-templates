@@ -1,4 +1,6 @@
 remove: false
+labels:
+  - MachineName : "Enter a unique name for your machine"
 opcua:
   nodes:
   - id: 13
@@ -19,11 +21,10 @@ opcua:
         typeDefinition: 0:FolderType
         children:
         - id: 16
-          browseName: 2:iTNC530
-          displayName: iTNC530
+          browseName: 2:${MachineName}
+          displayName: ${MachineName}
           typeDefinition: 11:HeidenhainNCType
           referenceType: 0:HasComponent
-          newInsanceIfExists: true
           children:
           - id: 0
             browseName: 11:State
@@ -132,7 +133,7 @@ opcua:
     uri: http://reniver.eu/UA/NC
 connectors:
 - id: 38
-  name: iTNC530
+  name: ${MachineName} Field Connector
   properties:
   - id: 189
     name: Status
@@ -301,7 +302,7 @@ connectors:
   type: HEIDENHAIN
   connectorCategoryType: Field
 - id: 68
-  name: OPC UA Server
+  name: ${MachineName} OPC UA Server
   properties:
   - id: 467
     name: Status

@@ -1,0 +1,649 @@
+remove: false
+labels:
+  - Machine Name : "Enter a unique name for your machine"
+  - Machine Model: "Enter the machine model"
+  - Machine Url : "Enter the MTConnect URL (ip/hostname)"
+  - Machine Port : "Enter the MTConnect port"
+  - Database Name : "Enter the database name"
+  - Database User : "Enter the database username"
+  - Database Password : "Enter the database password"
+connectors:
+- id: 4
+  name: TimescaleDB
+  properties:
+  - id: 5
+    name: Status
+    measurementDateTime: 2026-05-08T15:12:38.4683915Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 77
+    name: ${Machine Name} - machine
+    propertyLinks:
+    - id: 9
+      targetBridgePropertyId: 77
+      sourceDataMapperPropertyId: 43
+    retain: false
+    queryString: >-
+      INSERT INTO machines VALUES (@Serial, @Name, @Protocol, @Model, @Manufacturer)
+
+      ON CONFLICT (serial) DO UPDATE
+
+      SET
+          name = EXCLUDED.name,
+          protocol = EXCLUDED.protocol,
+          model = EXCLUDED.model,
+          manufacturer = EXCLUDED.manufacturer;
+    parameters: '{"Serial":"Text","Name":"Text","Protocol":"Text","Model":"Text","Manufacturer":"Text"}'
+    direction: Output
+    type: json
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 89
+    name: ${Machine Name} - Program Data Log
+    propertyLinks:
+    - id: 10
+      targetBridgePropertyId: 89
+      sourceDataMapperPropertyId: 63
+    retain: false
+    queryString: INSERT INTO program_data_log VALUES (@Serial, NOW(), @ProgramName, @ProgramState::program_state, @CycleTime);
+    parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
+    direction: Output
+    type: json
+    order: 1
+    isSystemProperty: false
+    isPermanent: false
+  - id: 90
+    name: ${Machine Name} - Observation Log
+    propertyLinks:
+    - id: 11
+      targetBridgePropertyId: 90
+      sourceDataMapperPropertyId: 48
+    retain: false
+    queryString: INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+    parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
+    direction: Output
+    type: json
+    order: 2
+    isSystemProperty: false
+    isPermanent: false
+  - id: 91
+    name: ${Machine Name} - Override Log
+    propertyLinks:
+    - id: 12
+      targetBridgePropertyId: 91
+      sourceDataMapperPropertyId: 52
+    retain: false
+    queryString: INSERT INTO override_log VALUES (@Serial, NOW(), @Feed, @Speed, @Rapid);
+    parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
+    direction: Output
+    type: json
+    order: 3
+    isSystemProperty: false
+    isPermanent: false
+  - id: 92
+    name: ${Machine Name} - Alarm Log
+    propertyLinks:
+    - id: 13
+      targetBridgePropertyId: 92
+      sourceDataMapperPropertyId: 54
+    retain: false
+    queryString: >+
+      SELECT insert_alarms(
+          @Serial,
+          @Alarms
+      );
+
+    parameters: '{"Serial":"Text","Alarms":"Jsonb"}'
+    direction: Output
+    type: json
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: databaseType
+    value: PostgreSQL
+    description: ''
+    settingType: Select
+    optionsSerialized: '["PostgreSQL","MySQL","MSSQL"]'
+    options:
+    - PostgreSQL
+    - MySQL
+    - MSSQL
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: host
+    value: timescaledb
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: 5432
+    description: ''
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: ${Database User}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: password
+    value: ${Database Password}
+    description: ''
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: database
+    value: ${Database Name}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: commandTimeout
+    value: 10
+    description: Time to wait (in seconds) before canceling a command. Set to 0 to disable.
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: extra
+    value: ''
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: SQL
+  connectorCategoryType: Enterprise
+- id: 6
+  name: ${Machine Name}
+  properties:
+  - id: 7
+    name: Status
+    measurementDateTime: 2026-05-08T15:07:19.4133086Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 8
+    name: doorstate
+    propertyLinks: []
+    dataItemId: door
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 9
+    name: avail
+    propertyLinks: []
+    dataItemId: avail
+    direction: Input
+    type: string
+    order: 1
+    isSystemProperty: false
+    isPermanent: false
+  - id: 11
+    name: total_time
+    propertyLinks: []
+    dataItemId: yltime
+    direction: Input
+    type: float
+    order: 3
+    isSystemProperty: false
+    isPermanent: false
+  - id: 12
+    name: cut_time
+    propertyLinks: []
+    dataItemId: ctime
+    direction: Input
+    type: float
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  - id: 14
+    name: program
+    propertyLinks: []
+    dataItemId: pgm
+    direction: Input
+    type: string
+    order: 5
+    isSystemProperty: false
+    isPermanent: false
+  - id: 15
+    name: subprogram
+    propertyLinks: []
+    dataItemId: spgm
+    direction: Input
+    type: string
+    order: 6
+    isSystemProperty: false
+    isPermanent: false
+  - id: 80
+    name: estop
+    propertyLinks: []
+    dataItemId: estop
+    direction: Input
+    type: string
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  - id: 82
+    name: mode
+    propertyLinks: []
+    dataItemId: mode
+    direction: Input
+    type: string
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 88
+    name: execution
+    propertyLinks: []
+    dataItemId: exec
+    direction: Input
+    type: string
+    order: 17
+    isSystemProperty: false
+    isPermanent: false
+  - id: 96
+    name: Frapidovr
+    propertyLinks: []
+    dataItemId: pfr
+    direction: Input
+    type: string
+    order: 14
+    isSystemProperty: false
+    isPermanent: false
+  - id: 97
+    name: Fovr
+    propertyLinks: []
+    dataItemId: pfo
+    direction: Input
+    type: string
+    order: 15
+    isSystemProperty: false
+    isPermanent: false
+  - id: 98
+    name: Sovr
+    propertyLinks: []
+    dataItemId: Sovr
+    direction: Input
+    type: string
+    order: 16
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: hostName
+    value: ${Machine Url}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: ${Machine Port}
+    description: ''
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: MTConnect
+  connectorCategoryType: Field
+dataMappers:
+- id: 6
+  name: ${Machine Name} mapper
+  properties:
+  - id: 38
+    name: program
+    propertyLinks:
+    - id: 96
+      targetDataMapperPropertyId: 38
+      sourceBridgePropertyId: 14
+    type: string
+    order: 4
+  - id: 39
+    name: subprogram
+    propertyLinks:
+    - id: 97
+      targetDataMapperPropertyId: 39
+      sourceBridgePropertyId: 15
+    type: string
+    order: 5
+  - id: 40
+    name: total_time
+    propertyLinks:
+    - id: 98
+      targetDataMapperPropertyId: 40
+      sourceBridgePropertyId: 11
+    type: float
+    order: 2
+  - id: 41
+    name: cut_time
+    propertyLinks:
+    - id: 99
+      targetDataMapperPropertyId: 41
+      sourceBridgePropertyId: 12
+    type: float
+    order: 3
+  - id: 43
+    name: Insert Machine
+    propertyLinks: []
+    transformationCodeBody: >-
+      const program = msg.payload[38]
+
+
+      let result = program;
+
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Name': '${Machine Name}',
+              'Protocol': 'MT Connect',
+              'Model': '${Machine Model}',
+              'Manufacturer': 'Mazak'
+          }
+      }
+    type: json
+    order: 13
+  - id: 45
+    name: estop
+    propertyLinks:
+    - id: 100
+      targetDataMapperPropertyId: 45
+      sourceBridgePropertyId: 80
+    type: string
+    order: 6
+  - id: 46
+    name: mode
+    propertyLinks:
+    - id: 101
+      targetDataMapperPropertyId: 46
+      sourceBridgePropertyId: 82
+    type: string
+    order: 7
+  - id: 47
+    name: avail
+    propertyLinks:
+    - id: 102
+      targetDataMapperPropertyId: 47
+      sourceBridgePropertyId: 9
+    type: string
+    order: 1
+  - id: 48
+    name: Observation Log
+    propertyLinks: []
+    transformationCodeBody: >-
+      const mode = msg.payload[46]
+
+      const avail = msg.payload[47]
+
+
+      let new_mode = 'Other';
+
+      switch (mode) {
+          case 'MANUAL':
+              new_mode = "Manual";
+              break;
+          case 'AUTOMATIC':
+              new_mode = "Automatic";
+              break;
+          case 'Other':
+              new_mode = "Other";
+      }
+
+
+      let new_state = "NotConnected";
+
+      switch (avail) {
+          case 'NOT_AVAILABLE':
+              new_state = "NotConnected";
+              break;
+          case 'AVAILABLE':
+              new_state = "Available";
+              break;
+          case 'STOPPED':
+          case 'CONNECTION_LOST':
+          case 'PERMISSION_DENIED':
+          case 'NOT_INITIALIZED':
+              new_state = 'NotConnected';
+      }
+
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Mode': new_mode,
+              'State': new_state
+          }
+      }
+    type: json
+    order: 15
+  - id: 49
+    name: Frapidovr
+    propertyLinks:
+    - id: 103
+      targetDataMapperPropertyId: 49
+      sourceBridgePropertyId: 96
+    type: string
+    order: 8
+  - id: 50
+    name: Fovr
+    propertyLinks:
+    - id: 104
+      targetDataMapperPropertyId: 50
+      sourceBridgePropertyId: 97
+    type: string
+    order: 9
+  - id: 51
+    name: Sovr
+    propertyLinks:
+    - id: 105
+      targetDataMapperPropertyId: 51
+      sourceBridgePropertyId: 98
+    type: string
+    order: 10
+  - id: 52
+    name: Override Log
+    propertyLinks: []
+    transformationCodeBody: >-
+      const Frapidovr = msg.payload[49]
+
+      const Fovr = msg.payload[50]
+
+      const Sovr = msg.payload[51]
+
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Feed': parseInt(Fovr),
+              'Speed': parseInt(Sovr),
+              'Rapid': parseInt(Frapidovr)
+          }
+      }
+    type: json
+    order: 16
+  - id: 53
+    name: doorstate
+    propertyLinks:
+    - id: 106
+      targetDataMapperPropertyId: 53
+      sourceBridgePropertyId: 8
+    type: string
+    order: 0
+  - id: 54
+    name: Alarm Log
+    propertyLinks: []
+    transformationCodeBody: >
+      const estop = msg.payload[45];
+
+      const doorstate = msg.payload[53];
+
+
+      // Define rules for generating alarms based on input
+
+      const alarms = [];
+
+
+      // Example rule: E-Stop triggered
+
+      if (estop !== "ARMED") {
+          alarms.push({
+              Code: "E-STOP-001",
+              Message: `Emergency Stop is in unsafe state: ${estop}`,
+              Source: "System Monitor",
+              Severity: 500,
+              Time: new Date().toISOString()
+          });
+      }
+
+
+      // Example rule: Door open or unlatched
+
+      if (doorstate === "UNLATCHED") {
+          alarms.push({
+              Code: "DOOR-001",
+              Message: "Machine door is unlatched",
+              Source: "Safety Interlock",
+              Severity: 300,
+              Time: new Date().toISOString()
+          });
+      } else if (doorstate === "CLOSED") {
+          alarms.push({
+              Code: "DOOR-002",
+              Message: "Machine door is closed",
+              Source: "Safety Interlock",
+              Severity: 100,
+              Time: new Date().toISOString()
+          });
+      }
+
+
+      // Final structure (matches your original format)
+
+      return {
+          value: {
+              Serial: "${Machine Name}",
+              Alarms: alarms
+          }
+      };
+    type: json
+    order: 17
+  - id: 55
+    name: execution
+    propertyLinks:
+    - id: 107
+      targetDataMapperPropertyId: 55
+      sourceBridgePropertyId: 88
+    type: string
+    order: 11
+  - id: 57
+    name: Status
+    propertyLinks:
+    - id: 108
+      targetDataMapperPropertyId: 57
+      sourceBridgePropertyId: 7
+    type: string
+    order: 12
+  - id: 63
+    name: Program DataLog
+    propertyLinks: []
+    transformationCodeBody: >-
+      const program = msg.payload[38]
+
+      const subprogram = msg.payload[39]
+
+      const total_time = parseFloat(msg.payload[40])
+
+      const cut_time = parseFloat(msg.payload[41])
+
+      const execution = msg.payload[55]
+
+      const Status = msg.payload[57]
+
+
+      let programState = execution;
+
+      console.log(execution);
+
+      console.log(Status);
+
+
+      switch(programState) {
+          case 'Finished':
+          case 'FINISHED':
+              programState = 'Finished';
+              break;
+          case 'Running':
+          case 'RUNNING':
+          case 'ACTIVE':
+              programState = 'Running';
+              break;
+          case 'READY':
+          case 'Idle':
+          case 'IDLE':
+              programState = 'Idle';
+              break;
+          case 'Stopped':
+          case 'PROGRAM_STOPPED':
+          case 'STOPPED':
+              programState = 'Stopped';
+              break;
+          case 'Interrupted':
+          case 'INTERRUPTED':
+              programState = 'Interrupted';
+              break;
+          case 'Error':
+          case 'ERROR':
+              programState = 'Error';
+              break;
+      }
+
+
+      return {
+          value: {
+              Serial: '${Machine Name}',
+              ProgramName: program + ' / ' + subprogram,
+              ProgramState: programState,
+              CycleTime: cut_time
+          }
+      };
+    type: json
+    order: 14
