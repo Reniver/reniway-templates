@@ -1,0 +1,673 @@
+remove: false
+labels:
+  - Machine Name : "Enter a unique name for your machine"
+  - Machine Model : "Model of the Okuma machine (e.g. LB3000)"
+  - Machine Url : "Enter the MTConnect agent URL (ip/hostname)"
+  - Machine Port : "Enter the MTConnect agent port (e.g. 5000)"
+  - Database Url : "Enter the database URL (ip/hostname)"
+  - Database Name : "Enter the database name"
+  - Database User : "Enter the database username"
+  - Database Password : "Enter the database password"
+connectors:
+- id: 4
+  name: TimescaleDB - ${Machine Name}
+  properties:
+  - id: 5
+    name: Status
+    measurementDateTime: 2026-05-08T14:21:38.4406926Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 65
+    name: ${Machine Name} - Machine
+    propertyLinks:
+    - id: 4
+      targetBridgePropertyId: 65
+      sourceDataMapperPropertyId: 20
+    retain: false
+    queryString: >-
+      INSERT INTO machines VALUES (@Serial, @Name, @Protocol, @Model, @Manufacturer)
+
+      ON CONFLICT (serial) DO UPDATE
+
+      SET
+          name = EXCLUDED.name,
+          protocol = EXCLUDED.protocol,
+          model = EXCLUDED.model,
+          manufacturer = EXCLUDED.manufacturer;
+    parameters: '{"Serial":"Text","Name":"Text","Protocol":"Text","Model":"Text","Manufacturer":"Text"}'
+    direction: Output
+    type: json
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 73
+    name: ${Machine Name} - ObservationLog
+    propertyLinks:
+    - id: 5
+      targetBridgePropertyId: 73
+      sourceDataMapperPropertyId: 21
+    retain: false
+    queryString: >
+      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+    parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
+    direction: Output
+    type: json
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 74
+    name: ${Machine Name} - OverrideLog
+    propertyLinks:
+    - id: 6
+      targetBridgePropertyId: 74
+      sourceDataMapperPropertyId: 22
+    retain: false
+    queryString: INSERT INTO override_log VALUES (@Serial, NOW(), @Feed, @Speed, @Rapid);
+    parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
+    direction: Output
+    type: json
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  - id: 75
+    name: ${Machine Name} - ProgramDataLog
+    propertyLinks:
+    - id: 7
+      targetBridgePropertyId: 75
+      sourceDataMapperPropertyId: 23
+    retain: false
+    queryString: INSERT INTO program_data_log VALUES (@Serial, NOW(), @ProgramName, @ProgramState::program_state, @CycleTime);
+    parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
+    direction: Output
+    type: json
+    order: 13
+    isSystemProperty: false
+    isPermanent: false
+  - id: 76
+    name: ${Machine Name} - AlarmLog
+    propertyLinks:
+    - id: 8
+      targetBridgePropertyId: 76
+      sourceDataMapperPropertyId: 24
+    retain: false
+    queryString: >+
+      SELECT insert_alarms(
+          @Serial,
+          @Alarms
+      );
+
+    parameters: '{"Serial":"Text","Alarms":"Jsonb"}'
+    direction: Output
+    type: json
+    order: 14
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: databaseType
+    value: PostgreSQL
+    description: ''
+    settingType: Select
+    optionsSerialized: '["PostgreSQL","MySQL","MSSQL"]'
+    options:
+    - PostgreSQL
+    - MySQL
+    - MSSQL
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: host
+    value: ${Database Url}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: 5432
+    description: ''
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: ${Database User}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: password
+    value: ${Database Password}
+    description: ''
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: database
+    value: ${Database Name}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: commandTimeout
+    value: 10
+    description: Time to wait (in seconds) before canceling a command. Set to 0 to disable.
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: extra
+    value: ''
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: SQL
+  connectorCategoryType: Enterprise
+- id: 13
+  name: ${Machine Name} - OSP-P200
+  properties:
+  # The MTConnect connector matches incoming observations to these properties by
+  # *dataItemId*. The dataItemId values below are taken from the Okuma device probe
+  # (e.g. demo.mtconnect.org, device "OKUMA"). The property `name` is free text.
+  - id: 31
+    name: Status
+    measurementDateTime: 2026-05-08T14:16:24.2933612Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 32
+    name: availability
+    propertyLinks: []
+    dataItemId: Lavail
+    direction: Input
+    type: string
+    order: 1
+    isSystemProperty: false
+    isPermanent: false
+  - id: 33
+    name: mode
+    propertyLinks: []
+    dataItemId: Lpmode
+    direction: Input
+    type: string
+    order: 2
+    isSystemProperty: false
+    isPermanent: false
+  - id: 34
+    name: execution
+    propertyLinks: []
+    dataItemId: Lpexecution
+    direction: Input
+    type: string
+    order: 3
+    isSystemProperty: false
+    isPermanent: false
+  - id: 35
+    name: program
+    propertyLinks: []
+    dataItemId: Lpprogram
+    direction: Input
+    type: string
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  - id: 36
+    name: feedOverride
+    propertyLinks: []
+    dataItemId: LpFovr
+    direction: Input
+    type: string
+    order: 5
+    isSystemProperty: false
+    isPermanent: false
+  - id: 37
+    name: spindleOverride
+    propertyLinks: []
+    dataItemId: LS1ovr
+    direction: Input
+    type: string
+    order: 6
+    isSystemProperty: false
+    isPermanent: false
+  - id: 40
+    name: cond_System
+    propertyLinks: []
+    dataItemId: Lsystem
+    direction: Input
+    type: string
+    order: 7
+    isSystemProperty: false
+    isPermanent: false
+  - id: 41
+    name: cond_Coolant
+    propertyLinks: []
+    dataItemId: LCoolantSystem1_cond
+    direction: Input
+    type: string
+    order: 8
+    isSystemProperty: false
+    isPermanent: false
+  - id: 42
+    name: cond_Electric
+    propertyLinks: []
+    dataItemId: LElectricSystem1_cond
+    direction: Input
+    type: string
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  - id: 43
+    name: cond_Hydraulic
+    propertyLinks: []
+    dataItemId: LHydraulicSystem1_cond
+    direction: Input
+    type: string
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 44
+    name: cond_Lubrication
+    propertyLinks: []
+    dataItemId: LLubricationSystem_cond
+    direction: Input
+    type: string
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 45
+    name: cond_Pneumatic
+    propertyLinks: []
+    dataItemId: LPneumaticSystem1_cond
+    direction: Input
+    type: string
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  - id: 46
+    name: cond_Loader
+    propertyLinks: []
+    dataItemId: LLoaderSystem1_cond
+    direction: Input
+    type: string
+    order: 13
+    isSystemProperty: false
+    isPermanent: false
+  - id: 47
+    name: cond_WasteDisposal
+    propertyLinks: []
+    dataItemId: LWasteDisposalSystem1_cond
+    direction: Input
+    type: string
+    order: 14
+    isSystemProperty: false
+    isPermanent: false
+  - id: 48
+    name: cond_ToolingDelivery
+    propertyLinks: []
+    dataItemId: LToolingDeliverySystem1_cond
+    direction: Input
+    type: string
+    order: 15
+    isSystemProperty: false
+    isPermanent: false
+  - id: 49
+    name: cond_BarFeeder
+    propertyLinks: []
+    dataItemId: LBarFeederSystem1_cond
+    direction: Input
+    type: string
+    order: 16
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: hostName
+    value: ${Machine Url}
+    description: Hostname or IP of the MTConnect agent.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: ${Machine Port}
+    description: TCP port of the MTConnect agent (default 5000).
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: MTConnect
+  connectorCategoryType: Field
+dataMappers:
+- id: 2
+  name: ${Machine Name} - Mapper
+  properties:
+  # --- Inputs: linked directly to MTConnect field-connector properties ---
+  - id: 10
+    name: Availability
+    propertyLinks:
+    - id: 80
+      targetDataMapperPropertyId: 10
+      sourceBridgePropertyId: 32
+    type: string
+    order: 0
+  - id: 11
+    name: Mode
+    propertyLinks:
+    - id: 81
+      targetDataMapperPropertyId: 11
+      sourceBridgePropertyId: 33
+    type: string
+    order: 1
+  - id: 12
+    name: Execution
+    propertyLinks:
+    - id: 82
+      targetDataMapperPropertyId: 12
+      sourceBridgePropertyId: 34
+    type: string
+    order: 2
+  - id: 13
+    name: Program
+    propertyLinks:
+    - id: 83
+      targetDataMapperPropertyId: 13
+      sourceBridgePropertyId: 35
+    type: string
+    order: 3
+  - id: 14
+    name: Feed Override
+    propertyLinks:
+    - id: 84
+      targetDataMapperPropertyId: 14
+      sourceBridgePropertyId: 36
+    type: string
+    order: 4
+  - id: 15
+    name: Spindle Override
+    propertyLinks:
+    - id: 85
+      targetDataMapperPropertyId: 15
+      sourceBridgePropertyId: 37
+    type: string
+    order: 5
+  - id: 19
+    name: Status
+    propertyLinks:
+    - id: 89
+      targetDataMapperPropertyId: 19
+      sourceBridgePropertyId: 31
+    type: string
+    order: 17
+  - id: 50
+    name: Cond System
+    propertyLinks:
+    - id: 90
+      targetDataMapperPropertyId: 50
+      sourceBridgePropertyId: 40
+    type: string
+    order: 7
+  - id: 51
+    name: Cond Coolant
+    propertyLinks:
+    - id: 91
+      targetDataMapperPropertyId: 51
+      sourceBridgePropertyId: 41
+    type: string
+    order: 8
+  - id: 52
+    name: Cond Electric
+    propertyLinks:
+    - id: 92
+      targetDataMapperPropertyId: 52
+      sourceBridgePropertyId: 42
+    type: string
+    order: 9
+  - id: 53
+    name: Cond Hydraulic
+    propertyLinks:
+    - id: 93
+      targetDataMapperPropertyId: 53
+      sourceBridgePropertyId: 43
+    type: string
+    order: 10
+  - id: 54
+    name: Cond Lubrication
+    propertyLinks:
+    - id: 94
+      targetDataMapperPropertyId: 54
+      sourceBridgePropertyId: 44
+    type: string
+    order: 11
+  - id: 55
+    name: Cond Pneumatic
+    propertyLinks:
+    - id: 95
+      targetDataMapperPropertyId: 55
+      sourceBridgePropertyId: 45
+    type: string
+    order: 12
+  - id: 56
+    name: Cond Loader
+    propertyLinks:
+    - id: 96
+      targetDataMapperPropertyId: 56
+      sourceBridgePropertyId: 46
+    type: string
+    order: 13
+  - id: 57
+    name: Cond WasteDisposal
+    propertyLinks:
+    - id: 97
+      targetDataMapperPropertyId: 57
+      sourceBridgePropertyId: 47
+    type: string
+    order: 14
+  - id: 58
+    name: Cond ToolingDelivery
+    propertyLinks:
+    - id: 98
+      targetDataMapperPropertyId: 58
+      sourceBridgePropertyId: 48
+    type: string
+    order: 15
+  - id: 59
+    name: Cond BarFeeder
+    propertyLinks:
+    - id: 99
+      targetDataMapperPropertyId: 59
+      sourceBridgePropertyId: 49
+    type: string
+    order: 16
+  # --- Transformations: produce the JSON shapes the SQL output properties expect ---
+  - id: 20
+    name: Insert Machine
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Mode = msg.payload[11]
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Name': '${Machine Name}',
+              'Protocol': 'MTConnect',
+              'Model': '${Machine Model}',
+              'Manufacturer': 'Okuma'
+          }
+      }
+    type: json
+    order: 17
+  - id: 21
+    name: Insert Observation
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Mode = msg.payload[11]
+      const Availability = msg.payload[10]
+
+      // Map MTConnect ControllerMode to the machine_mode enum
+      let mode = 'Other';
+      switch (Mode) {
+          case 'MANUAL':
+              mode = 'Manual';
+              break;
+          case 'MANUAL_DATA_INPUT':
+              mode = 'MDI';
+              break;
+          case 'AUTOMATIC':
+              mode = 'Automatic';
+              break;
+          case 'SEMI_AUTOMATIC':
+          case 'EDIT':
+              mode = 'Other';
+              break;
+      }
+
+      // MTConnect Availability drives the machine_state enum
+      let state = (Availability === 'AVAILABLE') ? 'Available' : 'NotConnected';
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Mode': mode,
+              'State': state
+          }
+      }
+    type: json
+    order: 18
+  - id: 22
+    name: Insert Overrides
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Feed = parseInt(msg.payload[14])
+      const Speed = parseInt(msg.payload[15])
+
+      // The Okuma MTConnect device exposes no rapid-traverse override, so Rapid is 0.
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Feed': isNaN(Feed) ? 0 : Feed,
+              'Speed': isNaN(Speed) ? 0 : Speed,
+              'Rapid': 0
+          }
+      }
+    type: json
+    order: 19
+  - id: 23
+    name: Program Data Log
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Program = msg.payload[13]
+      const Execution = msg.payload[12]
+
+      // Map MTConnect Execution to the program_state enum
+      let programState = 'Idle';
+      switch (Execution) {
+          case 'ACTIVE':
+              programState = 'Running';
+              break;
+          case 'READY':
+              programState = 'Idle';
+              break;
+          case 'STOPPED':
+          case 'PROGRAM_STOPPED':
+          case 'FEED_HOLD':
+          case 'OPTIONAL_STOP':
+              programState = 'Stopped';
+              break;
+          case 'INTERRUPTED':
+              programState = 'Interrupted';
+              break;
+          case 'PROGRAM_COMPLETED':
+              programState = 'Completed';
+              break;
+          case 'UNAVAILABLE':
+              programState = 'Not Selected';
+              break;
+      }
+
+      // Keep only the file name (strip any path)
+      let name = (Program || '').toString().split(/[/\\]+/).pop();
+      if (!name) name = 'Unknown';
+
+      // The Okuma MTConnect device exposes no cycle-time data item here, so CycleTime is 0.
+      return {
+          value: {
+              Serial: '${Machine Name}',
+              ProgramName: name,
+              ProgramState: programState,
+              CycleTime: 0
+          }
+      }
+    type: json
+    order: 20
+  - id: 24
+    name: Insert Alarms
+    propertyLinks: []
+    transformationCodeBody: |-
+      // The MTConnect connector publishes each Condition's level (e.g. "Normal",
+      // "Warning", "Fault", "Unavailable") as the property value. nativeCode/text are
+      // not exposed per property, so we raise one alarm per subsystem that is not Normal.
+      const subsystems = [
+          { src: 'System',          v: msg.payload[50] },
+          { src: 'Coolant',         v: msg.payload[51] },
+          { src: 'Electric',        v: msg.payload[52] },
+          { src: 'Hydraulic',       v: msg.payload[53] },
+          { src: 'Lubrication',     v: msg.payload[54] },
+          { src: 'Pneumatic',       v: msg.payload[55] },
+          { src: 'Loader',          v: msg.payload[56] },
+          { src: 'WasteDisposal',   v: msg.payload[57] },
+          { src: 'ToolingDelivery', v: msg.payload[58] },
+          { src: 'BarFeeder',       v: msg.payload[59] }
+      ];
+
+      const isActive = (lvl) => {
+          const s = ('' + (lvl || '')).toLowerCase();
+          return s.indexOf('fault') !== -1 || s.indexOf('warning') !== -1;
+      };
+      const severityFor = (lvl) =>
+          ('' + (lvl || '')).toLowerCase().indexOf('fault') !== -1 ? 700 : 400;
+
+      const alarms = subsystems.filter(x => isActive(x.v)).map(x => ({
+          Code: x.src,
+          Message: x.src + ': ' + x.v,
+          Source: x.src,
+          Severity: severityFor(x.v),
+          Time: new Date().toISOString()
+      }));
+
+      return {
+          value: {
+              Serial: '${Machine Name}',
+              Alarms: alarms
+          }
+      }
+    type: json
+    order: 21

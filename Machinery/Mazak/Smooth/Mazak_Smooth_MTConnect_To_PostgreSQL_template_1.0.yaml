@@ -54,7 +54,7 @@ connectors:
     parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
     direction: Output
     type: json
-    order: 1
+    order: 4
     isSystemProperty: false
     isPermanent: false
   - id: 90
@@ -68,7 +68,7 @@ connectors:
     parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
     direction: Output
     type: json
-    order: 2
+    order: 1
     isSystemProperty: false
     isPermanent: false
   - id: 91
@@ -82,7 +82,7 @@ connectors:
     parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
     direction: Output
     type: json
-    order: 3
+    order: 2
     isSystemProperty: false
     isPermanent: false
   - id: 92
@@ -101,7 +101,7 @@ connectors:
     parameters: '{"Serial":"Text","Alarms":"Jsonb"}'
     direction: Output
     type: json
-    order: 4
+    order: 3
     isSystemProperty: false
     isPermanent: false
   settings:

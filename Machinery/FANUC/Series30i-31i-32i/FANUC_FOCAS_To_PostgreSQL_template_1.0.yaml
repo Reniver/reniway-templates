@@ -1,0 +1,603 @@
+remove: false
+labels:
+  - Machine Name : "Enter a unique name for your machine"
+  - Machine Model : "Model number of the machine"
+  - Machine Manufacturer : "Manufacturer of the machine"
+  - Machine Url : "Enter the FOCAS URL (ip/hostname) of the FANUC control"
+  - Machine Port : "Enter the FOCAS port (default 8193)"
+  - Database Url : "Enter the database URL (ip/hostname)"
+  - Database Name : "Enter the database name"
+  - Database User : "Enter the database username"
+  - Database Password : "Enter the database password"
+connectors:
+- id: 4
+  name: TimescaleDB - ${Machine Name}
+  properties:
+  - id: 5
+    name: Status
+    measurementDateTime: 2026-05-08T14:21:38.4406926Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 65
+    name: ${Machine Name} - Machine
+    propertyLinks:
+    - id: 4
+      targetBridgePropertyId: 65
+      sourceDataMapperPropertyId: 20
+    retain: false
+    queryString: >-
+      INSERT INTO machines VALUES (@Serial, @Name, @Protocol, @Model, @Manufacturer)
+
+      ON CONFLICT (serial) DO UPDATE
+
+      SET
+          name = EXCLUDED.name,
+          protocol = EXCLUDED.protocol,
+          model = EXCLUDED.model,
+          manufacturer = EXCLUDED.manufacturer;
+    parameters: '{"Serial":"Text","Name":"Text","Protocol":"Text","Model":"Text","Manufacturer":"Text"}'
+    direction: Output
+    type: json
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 73
+    name: ${Machine Name} - ObservationLog
+    propertyLinks:
+    - id: 5
+      targetBridgePropertyId: 73
+      sourceDataMapperPropertyId: 21
+    retain: false
+    queryString: >
+      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+    parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
+    direction: Output
+    type: json
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 74
+    name: ${Machine Name} - OverrideLog
+    propertyLinks:
+    - id: 6
+      targetBridgePropertyId: 74
+      sourceDataMapperPropertyId: 22
+    retain: false
+    queryString: INSERT INTO override_log VALUES (@Serial, NOW(), @Feed, @Speed, @Rapid);
+    parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
+    direction: Output
+    type: json
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  - id: 75
+    name: ${Machine Name} - ProgramDataLog
+    propertyLinks:
+    - id: 7
+      targetBridgePropertyId: 75
+      sourceDataMapperPropertyId: 23
+    retain: false
+    queryString: INSERT INTO program_data_log VALUES (@Serial, NOW(), @ProgramName, @ProgramState::program_state, @CycleTime);
+    parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
+    direction: Output
+    type: json
+    order: 13
+    isSystemProperty: false
+    isPermanent: false
+  - id: 76
+    name: ${Machine Name} - AlarmLog
+    propertyLinks:
+    - id: 8
+      targetBridgePropertyId: 76
+      sourceDataMapperPropertyId: 24
+    retain: false
+    queryString: >+
+      SELECT insert_alarms(
+          @Serial,
+          @Alarms
+      );
+
+    parameters: '{"Serial":"Text","Alarms":"Jsonb"}'
+    direction: Output
+    type: json
+    order: 14
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: databaseType
+    value: PostgreSQL
+    description: ''
+    settingType: Select
+    optionsSerialized: '["PostgreSQL","MySQL","MSSQL"]'
+    options:
+    - PostgreSQL
+    - MySQL
+    - MSSQL
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: host
+    value: ${Database Url}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: 5432
+    description: ''
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: ${Database User}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: password
+    value: ${Database Password}
+    description: ''
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: database
+    value: ${Database Name}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: commandTimeout
+    value: 10
+    description: Time to wait (in seconds) before canceling a command. Set to 0 to disable.
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: extra
+    value: ''
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: SQL
+  connectorCategoryType: Enterprise
+- id: 13
+  name: ${Machine Name} - FANUC
+  properties:
+  # NOTE: For the FANUC FOCAS connector, incoming machine data is matched to these properties
+  # *by Name*. The names below must match the flattened FOCAS property names exactly
+  # (e.g. StateData_Mode, StateData_Override_FeedOverride). Do NOT add a ${Machine Name} prefix
+  # or rename them, or the connector will create duplicates and nothing will flow.
+  - id: 31
+    name: Status
+    measurementDateTime: 2026-05-08T14:16:24.2933612Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 32
+    name: StateData_Mode
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 1
+    isSystemProperty: false
+    isPermanent: false
+  - id: 33
+    name: StateData_Execution
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 2
+    isSystemProperty: false
+    isPermanent: false
+  - id: 35
+    name: StateData_Override_FeedOverride
+    propertyLinks: []
+    direction: Input
+    type: int
+    order: 4
+    isSystemProperty: false
+    isPermanent: false
+  - id: 36
+    name: StateData_Override_SpindleOverride
+    propertyLinks: []
+    direction: Input
+    type: int
+    order: 5
+    isSystemProperty: false
+    isPermanent: false
+  - id: 37
+    name: StateData_Override_RapidOverride
+    propertyLinks: []
+    direction: Input
+    type: int
+    order: 6
+    isSystemProperty: false
+    isPermanent: false
+  - id: 38
+    name: ProductionData_Executing_Name
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 7
+    isSystemProperty: false
+    isPermanent: false
+  - id: 39
+    name: ProductionData_Timers_CycleTimeMs
+    propertyLinks: []
+    direction: Input
+    type: int
+    order: 8
+    isSystemProperty: false
+    isPermanent: false
+  - id: 40
+    name: Alarms
+    propertyLinks: []
+    direction: Input
+    type: json
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: ipAddress
+    value: ${Machine Url}
+    description: IP address or hostname of the FANUC FOCAS control.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: ${Machine Port}
+    description: FOCAS TCP port of the control (default 8193).
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: machineInfo
+    value: true
+    description: Read machine info. Required to resolve alarm types correctly.
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: stateData
+    value: true
+    description: Read state data (mode, execution, overrides).
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: productionData
+    value: true
+    description: Read production data (executing program, cycle time).
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: axisData
+    value: false
+    description: Read per-axis data. Not used by this template.
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: alarms
+    value: true
+    description: Read active alarms.
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: spindleData
+    value: false
+    description: Read per-spindle data. Not used by this template.
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: toolData
+    value: false
+    description: Read tool data. Not used by this template.
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: FanucFOCASBridge
+  connectorCategoryType: Field
+dataMappers:
+- id: 2
+  name: ${Machine Name} - Mapper
+  properties:
+  # --- Inputs: linked directly to FANUC field-connector properties ---
+  - id: 10
+    name: Mode
+    propertyLinks:
+    - id: 80
+      targetDataMapperPropertyId: 10
+      sourceBridgePropertyId: 32
+    type: string
+    order: 0
+  - id: 11
+    name: Execution
+    propertyLinks:
+    - id: 81
+      targetDataMapperPropertyId: 11
+      sourceBridgePropertyId: 33
+    type: string
+    order: 1
+  - id: 13
+    name: Feed Override
+    propertyLinks:
+    - id: 83
+      targetDataMapperPropertyId: 13
+      sourceBridgePropertyId: 35
+    type: int
+    order: 3
+  - id: 14
+    name: Spindle Override
+    propertyLinks:
+    - id: 84
+      targetDataMapperPropertyId: 14
+      sourceBridgePropertyId: 36
+    type: int
+    order: 4
+  - id: 15
+    name: Rapid Override
+    propertyLinks:
+    - id: 85
+      targetDataMapperPropertyId: 15
+      sourceBridgePropertyId: 37
+    type: int
+    order: 5
+  - id: 16
+    name: Program Name
+    propertyLinks:
+    - id: 86
+      targetDataMapperPropertyId: 16
+      sourceBridgePropertyId: 38
+    type: string
+    order: 6
+  - id: 17
+    name: Cycle Time
+    propertyLinks:
+    - id: 87
+      targetDataMapperPropertyId: 17
+      sourceBridgePropertyId: 39
+    type: int
+    order: 7
+  - id: 18
+    name: Alarms
+    propertyLinks:
+    - id: 88
+      targetDataMapperPropertyId: 18
+      sourceBridgePropertyId: 40
+    type: json
+    order: 8
+  - id: 19
+    name: Status
+    propertyLinks:
+    - id: 89
+      targetDataMapperPropertyId: 19
+      sourceBridgePropertyId: 31
+    type: string
+    order: 9
+  # --- Transformations: produce the JSON shapes the SQL output properties expect ---
+  - id: 20
+    name: Insert Machine
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Mode = msg.payload[10]
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Name': '${Machine Name}',
+              'Protocol': 'FANUC',
+              'Model': '${Machine Model}',
+              'Manufacturer': '${Machine Manufacturer}'
+          }
+      }
+    type: json
+    order: 10
+  - id: 21
+    name: Insert Observation
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Mode = msg.payload[10]
+      const Execution = msg.payload[11]
+
+      // Map FANUC mode (cnc_statinfo.aut) to the machine_mode enum
+      let mode = 'Other';
+      switch (Mode) {
+          case 'MANUAL':
+              mode = 'Manual';
+              break;
+          case 'MANUAL_DATA_INPUT':
+              mode = 'MDI';
+              break;
+          case 'AUTOMATIC':
+              mode = 'Automatic';
+              break;
+          case 'EDIT':
+              mode = 'Other';
+              break;
+      }
+
+      // We only receive data while polling succeeds, so the control is reachable.
+      // Map to the machine_state enum based on availability.
+      let state = (Execution === 'UNAVAILABLE') ? 'NotConnected' : 'Available';
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Mode': mode,
+              'State': state
+          }
+      }
+    type: json
+    order: 11
+  - id: 22
+    name: Insert Overrides
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Feed = parseInt(msg.payload[13])
+      const Speed = parseInt(msg.payload[14])
+      const Rapid = parseInt(msg.payload[15])
+
+      return {
+          value: {
+              'Serial': '${Machine Name}',
+              'Feed': isNaN(Feed) ? 0 : Feed,
+              'Speed': isNaN(Speed) ? 0 : Speed,
+              'Rapid': isNaN(Rapid) ? 0 : Rapid
+          }
+      }
+    type: json
+    order: 12
+  - id: 23
+    name: Program Data Log
+    propertyLinks: []
+    transformationCodeBody: |-
+      const ProgramName = msg.payload[16]
+      const Execution = msg.payload[11]
+      const CycleTime = parseInt(msg.payload[17])
+
+      // Map FANUC execution state to the program_state enum
+      let programState = 'Idle';
+      switch (Execution) {
+          case 'ACTIVE':
+              programState = 'Running';
+              break;
+          case 'READY':
+              programState = 'Idle';
+              break;
+          case 'PROGRAM_STOPPED':
+          case 'OPTIONAL_STOP':
+          case 'STOPPED':
+          case 'FEED_HOLD':
+              programState = 'Stopped';
+              break;
+          case 'PROGRAM_COMPLETED':
+              programState = 'Completed';
+              break;
+          case 'INTERRUPTED':
+              programState = 'Interrupted';
+              break;
+          case 'UNAVAILABLE':
+              programState = 'Not Selected';
+              break;
+      }
+
+      // Keep only the file name (strip any path/drive)
+      let name = (ProgramName || '').toString().split(/[/\\]+/).pop();
+      if (!name) name = 'Unknown';
+
+      return {
+          value: {
+              Serial: '${Machine Name}',
+              ProgramName: name,
+              ProgramState: programState,
+              CycleTime: isNaN(CycleTime) ? 0 : CycleTime
+          }
+      }
+    type: json
+    order: 13
+  - id: 24
+    name: Insert Alarms
+    propertyLinks: []
+    transformationCodeBody: |-
+      const Alarms = msg.payload[18]
+
+      // The FANUC connector publishes a JSON array of:
+      //   { AxisCode, Axis, Number, Message, TypeCode, Type, Id }
+      let parsed = [];
+      try {
+          parsed = typeof Alarms === 'string' ? JSON.parse(Alarms) : (Alarms || []);
+      } catch (e) {
+          parsed = [];
+      }
+
+      // Map FANUC alarm type abbreviations to a numeric severity bucket
+      const severityForType = (type) => {
+          switch (type) {
+              case 'SV': // servo
+              case 'SP': // spindle
+              case 'OH': // overheat
+                  return 800;
+              case 'OT':  // overtravel
+              case 'APC':
+                  return 700;
+              case 'PS':  // P/S
+              case 'PC':  // PMC
+              case 'IO':  // I/O
+                  return 500;
+              case 'EX':  // external message
+                  return 300;
+              default:
+                  return 500;
+          }
+      };
+
+      const alarms = parsed.map(a => ({
+          Code: a.Id || ('' + a.Number),
+          Message: a.Message || '',
+          Source: a.Type || (a.Axis ? ('Axis ' + a.Axis) : 'CNC'),
+          Severity: severityForType(a.Type),
+          Time: new Date().toISOString()
+      }));
+
+      return {
+          value: {
+              Serial: '${Machine Name}',
+              Alarms: alarms
+          }
+      }
+    type: json
+    order: 14

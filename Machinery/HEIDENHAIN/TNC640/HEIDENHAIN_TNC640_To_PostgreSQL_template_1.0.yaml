@@ -10,7 +10,7 @@ labels:
   - Database Password : "Enter the database password"
 connectors:
 - id: 4
-  name: TimescaleDB
+  name: TimescaleDB - ${Machine Name}
   properties:
   - id: 5
     name: Status
@@ -56,7 +56,7 @@ connectors:
     parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
     direction: Output
     type: json
-    order: 12
+    order: 11
     isSystemProperty: false
     isPermanent: false
   - id: 74
@@ -70,7 +70,7 @@ connectors:
     parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
     direction: Output
     type: json
-    order: 13
+    order: 12
     isSystemProperty: false
     isPermanent: false
   - id: 75
@@ -84,7 +84,7 @@ connectors:
     parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
     direction: Output
     type: json
-    order: 11
+    order: 14
     isSystemProperty: false
     isPermanent: false
   - id: 76
@@ -103,7 +103,7 @@ connectors:
     parameters: '{"Serial":"Text","Alarms":"Jsonb"}'
     direction: Output
     type: json
-    order: 14
+    order: 13
     isSystemProperty: false
     isPermanent: false
   settings:
@@ -186,7 +186,7 @@ connectors:
   type: SQL
   connectorCategoryType: Enterprise
 - id: 13
-  name: ${Machine Name} - iTNC530
+  name: ${Machine Name} - TNC640
   properties:
   - id: 31
     name: Status
@@ -316,10 +316,10 @@ connectors:
     activationValue: ''
     readonly: false
   - key: dncType
-    value: ITNC
+    value: TNC6xx_NCK
     description: The type of the DNC to connect to.
     settingType: Select
-    optionsSerialized: '["ATEKM","ITNC","MILLPLUS","MILLPLUSIT","TURNPLUS","MILLPLUSIT_NCK","MANUALPLUS_NCK","ATEKM_NCK","TNC320_NCK","GRINDPLUS_NCK","TNC6xx_NCK","AR6000_NCK","CNCPILOT6xx_NCK","TNC128_NCK","GRINDPLUS640_NCK","TNC7_NCK"]'
+    optionsSerialized: '["ATEKM","ITNC","MILLPLUS","MILLPLUSIT","TURNPLUS","MILLPLUSIT_NCK","MANUALPLUS_NCK","ATEKM_NCK","TNC320_NCK","GRINDPLUS_NCK","TNC6xx_NCK","AR6000_NCK","CNCPILOT6xx_NCK","TNC128_NCK","GRINDPLUS640_NCK"]'
     options:
     - ATEKM
     - ITNC
@@ -336,13 +336,12 @@ connectors:
     - CNCPILOT6xx_NCK
     - TNC128_NCK
     - GRINDPLUS640_NCK
-    - TNC7_NCK
     activator: ''
     activationValue: ''
     readonly: false
   - key: user
     value: user
-    description: Username for the HEIDENHAIN connection.
+    description: Username for the HEIDENHAIN GRPC connection.
     settingType: String
     optionsSerialized: '[]'
     options: []
@@ -351,7 +350,7 @@ connectors:
     readonly: false
   - key: password
     value: user
-    description: Password for the HEIDENHAIN connection.
+    description: Password for the HEIDENHAIN GRPC connection.
     settingType: Password
     optionsSerialized: '[]'
     options: []
@@ -359,8 +358,8 @@ connectors:
     activationValue: ''
     readonly: false
   - key: secure
-    value: false
-    description: Enable secure HEIDENHAIN connection.
+    value: true
+    description: Enable secure HEIDENHAIN GRPC connection.
     settingType: Bool
     optionsSerialized: '[]'
     options: []
@@ -396,7 +395,7 @@ dataMappers:
           value: {
               'Serial': '${Machine Name}',
               'Name': '${Machine Name}',
-              'Protocol': 'HEIDENHAIN DNC',
+              'Protocol': 'HEIDENHAIN',
               'Model': '${Machine Model}',
               'Manufacturer': '${Machine Manufacturer}'
           }
