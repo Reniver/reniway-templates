@@ -10,7 +10,7 @@ labels:
   - Database Password : "Enter the database password"
 connectors:
 - id: 4
-  name: TimescaleDB
+  name: TimescaleDB - ${Machine Name}
   properties:
   - id: 5
     name: Status
@@ -393,7 +393,7 @@ dataMappers:
 
       return {
           value: {
-              'Serial': result,
+              'Serial': '${Machine Name}',
               'Name': '${Machine Name}',
               'Protocol': 'HEIDENHAIN',
               'Model': '${Machine Model}',
@@ -491,7 +491,7 @@ dataMappers:
 
       return {
           value: {
-              'Serial': SIK,
+              'Serial': '${Machine Name}',
               'Mode': mode,
               'State': mstate
           }
@@ -537,7 +537,7 @@ dataMappers:
 
       return {
           value: {
-              'Serial': SIK,
+              'Serial': '${Machine Name}',
               'Feed': FeedOverride,
               'Speed': SpeedOverride,
               'Rapid': RapidOverride
@@ -598,7 +598,7 @@ dataMappers:
 
       return {
           value: {
-              "Serial": SIK,
+              "Serial": '${Machine Name}',
               "Alarms": errors
           }
       }
@@ -646,7 +646,7 @@ dataMappers:
   - id: 69
     name: Program Data Log
     propertyLinks: []
-    transformationCodeBody: "const Program_Status = msg.payload[35]\nconst SIK = msg.payload[16]\nconst Program_Position = msg.payload[36]\nconst Status = msg.payload[67]\n\nconsole.log(Program_Status);\n\n// Helper: convert program status to human-readable form\nfunction parseProgramStatus(status) {\n    if( Status === 'Started') {\n        if (!status) return \"Unknown\";\n        return status\n            .replace(/^DNC_PRG_STS_/, \"\")   // remove prefix if present\n            .toLowerCase()\n            .replace(/_/g, ' ')\n            .replace(/\\b\\w/g, c => c.toUpperCase());\n        \n    } else {\n        return \"Unknown\";\n    }\n}\n\n// Robust helper: extract program name from many possible input shapes\nfunction extractProgramName(pos) {\n    try {\n        // Normalize input\n        let candidate = pos;\n\n        // If it's a string, try to parse JSON; otherwise keep the string\n        if (typeof candidate === 'string') {\n            try {\n                candidate = JSON.parse(candidate);\n            } catch (e) {\n                // keep as string\n            }\n        }\n\n        // Determine programPath\n        let programPath;\n        if (Array.isArray(candidate)) {\n            // New logic: Map over the array to get all ProgramName properties and join them with a '/'\n            programPath = candidate.map(item => {\n                let format_name = item.ProgramName.split(/[/\\\\]+/).pop();\n                return item && format_name;\n                }).join(' | ');\n        } else if (candidate && typeof candidate === 'object' && candidate.ProgramName) {\n            programPath = candidate.ProgramName;\n        } else if (typeof candidate === 'string') {\n            // Remove wrapping quotes if present (e.g. \"\\\"[...]\"\")\n            let maybe = candidate.trim();\n            if (maybe.length >= 2 && maybe[0] === '\"' && maybe[maybe.length - 1] === '\"') {\n                maybe = maybe.slice(1, -1);\n            }\n            // Try parse that snippet as JSON (in case it's a JSON stringified array)\n            try {\n                const parsed = JSON.parse(maybe);\n                if (Array.isArray(parsed) && parsed[0] && parsed[0].ProgramName) {\n                    // New logic for parsed array: Map and join\n                    programPath = parsed.map(item => item && item.ProgramName).join('/');\n                } else {\n                    programPath = maybe;\n                }\n            } catch (e) {\n                programPath = maybe;\n            }\n        }\n\n        if (!programPath) return \"Unknown\";\n\n        // Unescape double backslashes (\\\\\\\\ -> \\\\ -> \\)\n        programPath = programPath.replace(/\\\\\\\\/g, \"\\\\\");\n        // Split on both forward and back slashes and take the last segment\n        const file = programPath.split(/[/\\\\]+/).pop();\n        if (!file) return \"Unknown\";\n        // Strip extension if present\n        return file;\n    } catch (e) {\n        return \"Unknown\";\n    }\n}\n\nconst readableStatus = parseProgramStatus(Program_Status);\nconst programName = extractProgramName(Program_Position);\n\n// Return the exact shape you asked for\nreturn {\n    value: {\n        Serial: SIK,\n        ProgramName: programName,\n        ProgramState: readableStatus,\n        CycleTime: 0\n    }\n};\n"
+    transformationCodeBody: "const Program_Status = msg.payload[35]\nconst SIK = msg.payload[16]\nconst Program_Position = msg.payload[36]\nconst Status = msg.payload[67]\n\nconsole.log(Program_Status);\n\n// Helper: convert program status to human-readable form\nfunction parseProgramStatus(status) {\n    if( Status === 'Started') {\n        if (!status) return \"Unknown\";\n        return status\n            .replace(/^DNC_PRG_STS_/, \"\")   // remove prefix if present\n            .toLowerCase()\n            .replace(/_/g, ' ')\n            .replace(/\\b\\w/g, c => c.toUpperCase());\n        \n    } else {\n        return \"Unknown\";\n    }\n}\n\n// Robust helper: extract program name from many possible input shapes\nfunction extractProgramName(pos) {\n    try {\n        // Normalize input\n        let candidate = pos;\n\n        // If it's a string, try to parse JSON; otherwise keep the string\n        if (typeof candidate === 'string') {\n            try {\n                candidate = JSON.parse(candidate);\n            } catch (e) {\n                // keep as string\n            }\n        }\n\n        // Determine programPath\n        let programPath;\n        if (Array.isArray(candidate)) {\n            // New logic: Map over the array to get all ProgramName properties and join them with a '/'\n            programPath = candidate.map(item => {\n                let format_name = item.ProgramName.split(/[/\\\\]+/).pop();\n                return item && format_name;\n                }).join(' | ');\n        } else if (candidate && typeof candidate === 'object' && candidate.ProgramName) {\n            programPath = candidate.ProgramName;\n        } else if (typeof candidate === 'string') {\n            // Remove wrapping quotes if present (e.g. \"\\\"[...]\"\")\n            let maybe = candidate.trim();\n            if (maybe.length >= 2 && maybe[0] === '\"' && maybe[maybe.length - 1] === '\"') {\n                maybe = maybe.slice(1, -1);\n            }\n            // Try parse that snippet as JSON (in case it's a JSON stringified array)\n            try {\n                const parsed = JSON.parse(maybe);\n                if (Array.isArray(parsed) && parsed[0] && parsed[0].ProgramName) {\n                    // New logic for parsed array: Map and join\n                    programPath = parsed.map(item => item && item.ProgramName).join('/');\n                } else {\n                    programPath = maybe;\n                }\n            } catch (e) {\n                programPath = maybe;\n            }\n        }\n\n        if (!programPath) return \"Unknown\";\n\n        // Unescape double backslashes (\\\\\\\\ -> \\\\ -> \\)\n        programPath = programPath.replace(/\\\\\\\\/g, \"\\\\\");\n        // Split on both forward and back slashes and take the last segment\n        const file = programPath.split(/[/\\\\]+/).pop();\n        if (!file) return \"Unknown\";\n        // Strip extension if present\n        return file;\n    } catch (e) {\n        return \"Unknown\";\n    }\n}\n\nconst readableStatus = parseProgramStatus(Program_Status);\nconst programName = extractProgramName(Program_Position);\n\n// Return the exact shape you asked for\nreturn {\n    value: {\n        Serial: '${Machine Name}',\n        ProgramName: programName,\n        ProgramState: readableStatus,\n        CycleTime: 0\n    }\n};\n"
     type: json
     order: 14
   - id: 362

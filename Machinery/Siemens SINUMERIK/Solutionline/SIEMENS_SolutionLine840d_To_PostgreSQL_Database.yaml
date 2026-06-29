@@ -1,0 +1,429 @@
+remove: false
+labels:
+  - Machine Name : "Enter a unique name for your machine"
+  - Machine Url : "Enter the Machine URL (ip/hostname)"
+  - Database Name : "Enter the database name"
+  - Database User : "Enter the database username"
+  - Database Password : "Enter the database password"
+connectors:
+- id: 7
+  name: TimescaleDB - ${Machine Name}
+  properties:
+  - id: 94
+    name: ${Machine Name} - program data log
+    propertyLinks: []
+    retain: false
+    queryString: INSERT INTO program_data_log VALUES (@Serial, NOW(), @ProgramName, @ProgramState::program_state, @CycleTime);
+    parameters: '{"Serial":"Text","ProgramName":"Text","ProgramState":"Text","CycleTime":"Integer"}'
+    direction: Output
+    type: json
+    order: 10
+    isSystemProperty: false
+    isPermanent: false
+  - id: 99
+    name: ${Machine Name} - override log
+    propertyLinks:
+    - id: 8
+      targetBridgePropertyId: 99
+      sourceDataMapperPropertyId: 71
+    retain: false
+    queryString: INSERT INTO override_log VALUES (@Serial, NOW(), @Feed, @Speed, @Rapid);
+    parameters: '{"Serial":"Text","Feed":"Integer","Speed":"Integer","Rapid":"Integer"}'
+    direction: Output
+    type: json
+    order: 9
+    isSystemProperty: false
+    isPermanent: false
+  - id: 100
+    name: ${Machine Name} - observation log
+    propertyLinks:
+    - id: 9
+      targetBridgePropertyId: 100
+      sourceDataMapperPropertyId: 67
+    retain: false
+    queryString: INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::machine_mode, @State::machine_state);
+    parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
+    direction: Output
+    type: json
+    order: 11
+    isSystemProperty: false
+    isPermanent: false
+  - id: 104
+    name: ${Machine Name} - machine info
+    propertyLinks:
+    - id: 10
+      targetBridgePropertyId: 104
+      sourceDataMapperPropertyId: 68
+    retain: false
+    queryString: INSERT INTO machines VALUES (@Serial, @Name, @Protocol, @Model, @Manufacturer)
+    parameters: '{"Serial":"Text","Name":"Text","Protocol":"Text","Model":"Text","Manufacturer":"Text"}'
+    direction: Output
+    type: json
+    order: 12
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: databaseType
+    value: PostgreSQL
+    description: ''
+    settingType: Select
+    optionsSerialized: '["PostgreSQL","MySQL","MSSQL"]'
+    options:
+    - PostgreSQL
+    - MySQL
+    - MSSQL
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: encrypt
+    value: true
+    description: ''
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: databaseType
+    activationValue: MSSQL
+    readonly: false
+  - key: trustServerCertificate
+    value: false
+    description: ''
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: encrypt
+    activationValue: true
+    readonly: false
+  - key: hostNameInCertificate
+    value: ''
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: trustServerCertificate
+    activationValue: false
+    readonly: false
+  - key: host
+    value: timescaledb
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: port
+    value: 5432
+    description: ''
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: ${Database User}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: password
+    value: ${Database Password}
+    description: ''
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: database
+    value: ${Database Name}
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: commandTimeout
+    value: 10
+    description: Time to wait (in seconds) before canceling a command. Set to 0 to disable.
+    settingType: Int
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: extra
+    value: ''
+    description: ''
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: SQL
+  connectorCategoryType: Enterprise
+- id: 8
+  name: ${Machine Name} G550
+  properties:
+  - id: 85
+    name: Status
+    measurementDateTime: 2026-05-09T06:26:04.8309554Z
+    propertyLinks: []
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: true
+    isPermanent: true
+  - id: 86
+    name: Operation Mode [CH1]
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Bag/State/opMode[u1]
+    tagName: ''
+    direction: Input
+    type: ushort
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 87
+    name: Program Running State [CH1]
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Channel/State/acProg[u1,1]
+    tagName: ''
+    direction: Input
+    type: ushort
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 89
+    name: Program Runtime [CH1]
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Channel/State/actProgNetTime[u1, 1]
+    tagName: ''
+    direction: Input
+    type: double
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 90
+    name: Main NC Program [CH1]
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Channel/ProgramPointer/progNameVL[u1,1]
+    tagName: ''
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 91
+    name: Feedrate Override
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Channel/State/feedRateIpoOvr
+    tagName: ''
+    direction: Input
+    type: double
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 92
+    name: Spindle Speed Override
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Nck/Spindle/speedOvr[1]
+    tagName: ''
+    direction: Input
+    type: double
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 98
+    name: Serial
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Nck/State/hwProductSerialNrL[1]
+    tagName: ''
+    direction: Input
+    type: string
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 102
+    name: Alarm Active [CH1]
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Channel/State/chanAlarm[u1]
+    tagName: ''
+    direction: Input
+    type: ushort
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  - id: 105
+    name: Rapid Override [CH1]
+    propertyLinks: []
+    pollingInterval: 1000
+    address: /Channel/State/rapFeedRateOvr[u1, 1]
+    tagName: ''
+    direction: Input
+    type: double
+    order: 0
+    isSystemProperty: false
+    isPermanent: false
+  settings:
+  - key: host
+    value: ${Machine Url}
+    description: IP address of the machine.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: machineType
+    value: s840d
+    description: The type of SINUMERIK machine to connect to.
+    settingType: Select
+    optionsSerialized: '["s840d"]'
+    options:
+    - s840d
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: deviceType
+    value: SolutionLine
+    description: The type of SINUMERIK device to connect to.
+    settingType: Select
+    optionsSerialized: '["SolutionLine","PowerLine"]'
+    options:
+    - SolutionLine
+    - PowerLine
+    activator: ''
+    activationValue: ''
+    readonly: false
+  startup: false
+  type: SINUMERIK
+  connectorCategoryType: Field
+dataMappers:
+- id: 4
+  name: ${Machine Name} Channel 1
+  properties:
+  - id: 52
+    name: Machine Info
+    value: ''
+    propertyLinks: []
+    type: json
+    order: 0
+  - id: 55
+    name: Operation Mode
+    propertyLinks:
+    - id: 42
+      targetDataMapperPropertyId: 55
+      sourceBridgePropertyId: 86
+    type: ushort
+    order: 1
+  - id: 56
+    name: Program Running State
+    propertyLinks:
+    - id: 43
+      targetDataMapperPropertyId: 56
+      sourceBridgePropertyId: 87
+    type: ushort
+    order: 2
+  - id: 57
+    name: Program Name
+    propertyLinks:
+    - id: 44
+      targetDataMapperPropertyId: 57
+      sourceBridgePropertyId: 90
+    type: string
+    order: 4
+  - id: 58
+    name: Program Runtime
+    propertyLinks:
+    - id: 45
+      targetDataMapperPropertyId: 58
+      sourceBridgePropertyId: 89
+    type: double
+    order: 3
+  - id: 59
+    name: Feedrate Override
+    propertyLinks:
+    - id: 46
+      targetDataMapperPropertyId: 59
+      sourceBridgePropertyId: 91
+    type: double
+    order: 5
+  - id: 60
+    name: Spindle Speed Override
+    propertyLinks:
+    - id: 47
+      targetDataMapperPropertyId: 60
+      sourceBridgePropertyId: 92
+    type: double
+    order: 6
+  - id: 62
+    name: Serial
+    propertyLinks:
+    - id: 48
+      targetDataMapperPropertyId: 62
+      sourceBridgePropertyId: 98
+    type: string
+    order: 7
+  - id: 64
+    name: Old Program Data Log
+    value: ''
+    propertyLinks: []
+    type: json
+    order: 12
+  - id: 65
+    name: Alarm Active
+    propertyLinks:
+    - id: 49
+      targetDataMapperPropertyId: 65
+      sourceBridgePropertyId: 102
+    type: ushort
+    order: 8
+  - id: 66
+    name: Status
+    propertyLinks:
+    - id: 50
+      targetDataMapperPropertyId: 66
+      sourceBridgePropertyId: 85
+    type: string
+    order: 10
+  - id: 67
+    name: Observability Log
+    value: ''
+    propertyLinks: []
+    type: json
+    order: 13
+  - id: 68
+    name: Machine Identification
+    value: ''
+    propertyLinks: []
+    type: json
+    order: 14
+  - id: 70
+    name: Rapid Override
+    propertyLinks:
+    - id: 52
+      targetDataMapperPropertyId: 70
+      sourceBridgePropertyId: 105
+    type: double
+    order: 9
+  - id: 71
+    name: Override Log
+    value: ''
+    propertyLinks: []
+    type: json
+    order: 0

@@ -1,6 +1,7 @@
 remove: false
 labels:
-  - MachineName : "Enter a unique name for your machine"
+  - Machine Name : "Enter a unique name for your machine"
+  - Network Address : "Enter the IP or Hostname of the HEIDENHAIN control"
 opcua:
   nodes:
   - id: 13
@@ -21,8 +22,8 @@ opcua:
         typeDefinition: 0:FolderType
         children:
         - id: 16
-          browseName: 2:${MachineName}
-          displayName: ${MachineName}
+          browseName: 2:${Machine Name}
+          displayName: ${Machine Name}
           typeDefinition: 11:HeidenhainNCType
           referenceType: 0:HasComponent
           children:
@@ -133,7 +134,7 @@ opcua:
     uri: http://reniver.eu/UA/NC
 connectors:
 - id: 38
-  name: ${MachineName} Field Connector
+  name: ${Machine Name} Field Connector
   properties:
   - id: 189
     name: Status
@@ -266,7 +267,7 @@ connectors:
     isPermanent: false
   settings:
   - key: host
-    value: 0.0.0.0
+    value: ${Network Address}
     description: IP address of the machine.
     settingType: String
     optionsSerialized: '[]'
@@ -278,7 +279,7 @@ connectors:
     value: ITNC
     description: The type of the DNC to connect to.
     settingType: Select
-    optionsSerialized: '["ATEKM","ITNC","MILLPLUS","MILLPLUSIT","TURNPLUS","MILLPLUSIT_NCK","MANUALPLUS_NCK","ATEKM_NCK","TNC320_NCK","GRINDPLUS_NCK","TNC6xx_NCK","AR6000_NCK","CNCPILOT6xx_NCK","TNC128_NCK","GRINDPLUS640_NCK"]'
+    optionsSerialized: '["ATEKM","ITNC","MILLPLUS","MILLPLUSIT","TURNPLUS","MILLPLUSIT_NCK","MANUALPLUS_NCK","ATEKM_NCK","TNC320_NCK","GRINDPLUS_NCK","TNC6xx_NCK","AR6000_NCK","CNCPILOT6xx_NCK","TNC128_NCK","GRINDPLUS640_NCK","TNC7_NCK"]'
     options:
     - ATEKM
     - ITNC
@@ -295,14 +296,42 @@ connectors:
     - CNCPILOT6xx_NCK
     - TNC128_NCK
     - GRINDPLUS640_NCK
+    - TNC7_NCK
     activator: ''
     activationValue: ''
+    readonly: false
+  - key: secure
+    value: false
+    description: Enable secure communication with the HEIDENHAIN control
+    settingType: Bool
+    optionsSerialized: '[]'
+    options: []
+    activator: ''
+    activationValue: ''
+    readonly: false
+  - key: user
+    value: user
+    description: Username for secure communication with the HEIDENHAIN control.
+    settingType: String
+    optionsSerialized: '[]'
+    options: []
+    activator: secure
+    activationValue: true
+    readonly: false
+  - key: password
+    value: user
+    description: Password for secure communication with the HEIDENHAIN control.
+    settingType: Password
+    optionsSerialized: '[]'
+    options: []
+    activator: secure
+    activationValue: true
     readonly: false
   startup: false
   type: HEIDENHAIN
   connectorCategoryType: Field
 - id: 68
-  name: ${MachineName} OPC UA Server
+  name: ${Machine Name} OPC UA Server
   properties:
   - id: 467
     name: Status
