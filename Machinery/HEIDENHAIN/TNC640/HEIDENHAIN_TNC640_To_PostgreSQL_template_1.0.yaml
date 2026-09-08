@@ -52,7 +52,7 @@ connectors:
       sourceDataMapperPropertyId: 20
     retain: false
     queryString: >
-      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::machine_mode, @State::machine_state);
     parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
     direction: Output
     type: json
@@ -384,24 +384,35 @@ dataMappers:
   - id: 17
     name: Insert Machine
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const SIK = msg.payload[16]
 
+      const SIK_timestamp = new Date(msg.timestamps[16]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Name': '${Machine Name}',
+          'Protocol': 'HEIDENHAIN',
+          'Model': '${Machine Model}',
+          'Manufacturer': '${Machine Manufacturer}'
+      };
 
-      let result = SIK;
-
-
+      let result_timestamp_optional = SIK_timestamp;
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Name': '${Machine Name}',
-              'Protocol': 'HEIDENHAIN',
-              'Model': '${Machine Model}',
-              'Manufacturer': '${Machine Manufacturer}'
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 13
+    transformations:
+    - sourceDataMapperPropertyId: 16
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 18
     name: State
     propertyLinks:
@@ -421,17 +432,17 @@ dataMappers:
   - id: 20
     name: Insert Observation
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const SIK = msg.payload[16]
-
       const State = msg.payload[18]
+      const Execution_Mode = msg.payload[19]
 
-      const ExecutionMode = msg.payload[19]
-
-
+      const SIK_timestamp = new Date(msg.timestamps[16]);
+      const State_timestamp = new Date(msg.timestamps[18]);
+      const Execution_Mode_timestamp = new Date(msg.timestamps[19]);
+    transformationCodeBody: |-
       let mode = 'Other';
-
-      switch (ExecutionMode) {
+      switch (Execution_Mode) {
           case 'DNC_EXEC_MANUAL': 
               mode = "Manual";
               break;
@@ -455,9 +466,7 @@ dataMappers:
               mode = "Handwheel";
       }
 
-
       let mstate = "NotConnected";
-
       switch (State) {
           case 'DNC_EVT_STATE_HOST_NOT_AVAILABLE':
               mstate = "NotConnected";
@@ -486,18 +495,34 @@ dataMappers:
           case 'DNC_EVT_STATE_NOT_INITIALIZED':
               mstate = 'NotConnected';
       }
+      let result = {
+          'Serial': '${Machine Name}',
+          'Mode': mode,
+          'State': mstate
+      };
 
-
-
+      let result_timestamp_optional = new Date(Math.max(SIK_timestamp, State_timestamp, Execution_Mode_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Mode': mode,
-              'State': mstate
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 15
+    transformations:
+    - sourceDataMapperPropertyId: 16
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 18
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 19
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 21
     name: Feed Override
     propertyLinks:
@@ -525,26 +550,49 @@ dataMappers:
   - id: 24
     name: Insert Overrides
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const SIK = msg.payload[16]
+      const Feed_Override = parseInt(msg.payload[21])
+      const Speed_Override = parseInt(msg.payload[22])
+      const Rapid_Override = parseInt(msg.payload[23])
 
-      const FeedOverride = parseInt(msg.payload[21])
+      const SIK_timestamp = new Date(msg.timestamps[16]);
+      const Feed_Override_timestamp = new Date(msg.timestamps[21]);
+      const Speed_Override_timestamp = new Date(msg.timestamps[22]);
+      const Rapid_Override_timestamp = new Date(msg.timestamps[23]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Feed': Feed_Override,
+          'Speed': Speed_Override,
+          'Rapid': Rapid_Override
+      };
 
-      const SpeedOverride = parseInt(msg.payload[22])
-
-      const RapidOverride = parseInt(msg.payload[23])
-
-
+      let result_timestamp_optional = new Date(Math.max(SIK_timestamp, Feed_Override_timestamp, Speed_Override_timestamp, Rapid_Override_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Feed': FeedOverride,
-              'Speed': SpeedOverride,
-              'Rapid': RapidOverride
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 16
+    transformations:
+    - sourceDataMapperPropertyId: 16
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 21
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 22
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 23
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 25
     name: Errors
     propertyLinks:
@@ -556,13 +604,14 @@ dataMappers:
   - id: 26
     name: Insert Alarms
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const SIK = msg.payload[16]
-
       const Errors = msg.payload[25]
 
-
-      convertSeverity = (severity) => {
+      const SIK_timestamp = new Date(msg.timestamps[16]);
+      const Errors_timestamp = new Date(msg.timestamps[25]);
+    transformationCodeBody: |-
+      const convertSeverity = (severity) => {
           switch (severity) {
               case 0: return 1;
               case 1: return 400;
@@ -574,16 +623,19 @@ dataMappers:
               case 7: return 200;
               case 8: return 400;
               case 9: return 100;
+              default: return 500;
           }
-      }; 
+      };
 
-
-      convertTimestamp = (timeStamp) => {
-          const nanosAsMillis = Math.floor(timeStamp.Nanos / 1000000);
+      const convertTimestamp = (timeStamp) => {
+          if (!timeStamp || typeof timeStamp.Seconds !== 'number') {
+              return new Date();
+          }
+          const nanos = typeof timeStamp.Nanos === 'number' ? timeStamp.Nanos : 0;
+          const nanosAsMillis = Math.floor(nanos / 1000000);
           const totalMillis = (timeStamp.Seconds * 1000) + nanosAsMillis;
           return new Date(totalMillis);
-      }
-
+      };
 
       let errors = JSON.parse(Errors).map(x => {
           return {
@@ -594,16 +646,30 @@ dataMappers:
               'Time': convertTimestamp(x.TimeStamp),
           }
       })
+      let result = {
+          "Serial": '${Machine Name}',
+          "Alarms": errors
+      };
 
-
+      let result_timestamp_optional = new Date(Math.max(SIK_timestamp, Errors_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              "Serial": '${Machine Name}',
-              "Alarms": errors
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 17
+    transformations:
+    - sourceDataMapperPropertyId: 16
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 25
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 35
     name: Program Status
     propertyLinks:
@@ -646,9 +712,129 @@ dataMappers:
   - id: 69
     name: Program Data Log
     propertyLinks: []
-    transformationCodeBody: "const Program_Status = msg.payload[35]\nconst SIK = msg.payload[16]\nconst Program_Position = msg.payload[36]\nconst Status = msg.payload[67]\n\nconsole.log(Program_Status);\n\n// Helper: convert program status to human-readable form\nfunction parseProgramStatus(status) {\n    if( Status === 'Started') {\n        if (!status) return \"Unknown\";\n        return status\n            .replace(/^DNC_PRG_STS_/, \"\")   // remove prefix if present\n            .toLowerCase()\n            .replace(/_/g, ' ')\n            .replace(/\\b\\w/g, c => c.toUpperCase());\n        \n    } else {\n        return \"Unknown\";\n    }\n}\n\n// Robust helper: extract program name from many possible input shapes\nfunction extractProgramName(pos) {\n    try {\n        // Normalize input\n        let candidate = pos;\n\n        // If it's a string, try to parse JSON; otherwise keep the string\n        if (typeof candidate === 'string') {\n            try {\n                candidate = JSON.parse(candidate);\n            } catch (e) {\n                // keep as string\n            }\n        }\n\n        // Determine programPath\n        let programPath;\n        if (Array.isArray(candidate)) {\n            // New logic: Map over the array to get all ProgramName properties and join them with a '/'\n            programPath = candidate.map(item => {\n                let format_name = item.ProgramName.split(/[/\\\\]+/).pop();\n                return item && format_name;\n                }).join(' | ');\n        } else if (candidate && typeof candidate === 'object' && candidate.ProgramName) {\n            programPath = candidate.ProgramName;\n        } else if (typeof candidate === 'string') {\n            // Remove wrapping quotes if present (e.g. \"\\\"[...]\"\")\n            let maybe = candidate.trim();\n            if (maybe.length >= 2 && maybe[0] === '\"' && maybe[maybe.length - 1] === '\"') {\n                maybe = maybe.slice(1, -1);\n            }\n            // Try parse that snippet as JSON (in case it's a JSON stringified array)\n            try {\n                const parsed = JSON.parse(maybe);\n                if (Array.isArray(parsed) && parsed[0] && parsed[0].ProgramName) {\n                    // New logic for parsed array: Map and join\n                    programPath = parsed.map(item => item && item.ProgramName).join('/');\n                } else {\n                    programPath = maybe;\n                }\n            } catch (e) {\n                programPath = maybe;\n            }\n        }\n\n        if (!programPath) return \"Unknown\";\n\n        // Unescape double backslashes (\\\\\\\\ -> \\\\ -> \\)\n        programPath = programPath.replace(/\\\\\\\\/g, \"\\\\\");\n        // Split on both forward and back slashes and take the last segment\n        const file = programPath.split(/[/\\\\]+/).pop();\n        if (!file) return \"Unknown\";\n        // Strip extension if present\n        return file;\n    } catch (e) {\n        return \"Unknown\";\n    }\n}\n\nconst readableStatus = parseProgramStatus(Program_Status);\nconst programName = extractProgramName(Program_Position);\n\n// Return the exact shape you asked for\nreturn {\n    value: {\n        Serial: '${Machine Name}',\n        ProgramName: programName,\n        ProgramState: readableStatus,\n        CycleTime: 0\n    }\n};\n"
+    transformationCodeHeader: |-
+      const Program_Status = msg.payload[35]
+      const SIK = msg.payload[16]
+      const Program_Position = msg.payload[36]
+      const Status = msg.payload[67]
+
+      const Program_Status_timestamp = new Date(msg.timestamps[35]);
+      const SIK_timestamp = new Date(msg.timestamps[16]);
+      const Program_Position_timestamp = new Date(msg.timestamps[36]);
+      const Status_timestamp = new Date(msg.timestamps[67]);
+    transformationCodeBody: |-
+      console.log(Program_Status);
+
+      // Helper: convert program status to human-readable form
+      function parseProgramStatus(status) {
+          if( Status === 'Started') {
+              if (!status) return "Unknown";
+              return status
+                  .replace(/^DNC_PRG_STS_/, "")   // remove prefix if present
+                  .toLowerCase()
+                  .replace(/_/g, ' ')
+                  .replace(/\b\w/g, c => c.toUpperCase());
+              
+          } else {
+              return "Unknown";
+          }
+      }
+
+      // Robust helper: extract program name from many possible input shapes
+      function extractProgramName(pos) {
+          try {
+              // Normalize input
+              let candidate = pos;
+
+              // If it's a string, try to parse JSON; otherwise keep the string
+              if (typeof candidate === 'string') {
+                  try {
+                      candidate = JSON.parse(candidate);
+                  } catch (e) {
+                      // keep as string
+                  }
+              }
+
+              // Determine programPath
+              let programPath;
+              if (Array.isArray(candidate)) {
+                  // New logic: Map over the array to get all ProgramName properties and join them with a '/'
+                  programPath = candidate.map(item => {
+                      let format_name = item.ProgramName.split(/[/\\]+/).pop();
+                      return item && format_name;
+                      }).join(' | ');
+              } else if (candidate && typeof candidate === 'object' && candidate.ProgramName) {
+                  programPath = candidate.ProgramName;
+              } else if (typeof candidate === 'string') {
+                  // Remove wrapping quotes if present (e.g. "\"[...]"")
+                  let maybe = candidate.trim();
+                  if (maybe.length >= 2 && maybe[0] === '"' && maybe[maybe.length - 1] === '"') {
+                      maybe = maybe.slice(1, -1);
+                  }
+                  // Try parse that snippet as JSON (in case it's a JSON stringified array)
+                  try {
+                      const parsed = JSON.parse(maybe);
+                      if (Array.isArray(parsed) && parsed[0] && parsed[0].ProgramName) {
+                          // New logic for parsed array: Map and join
+                          programPath = parsed.map(item => item && item.ProgramName).join('/');
+                      } else {
+                          programPath = maybe;
+                      }
+                  } catch (e) {
+                      programPath = maybe;
+                  }
+              }
+
+              if (!programPath) return "Unknown";
+
+              // Unescape double backslashes (\\\\ -> \\ -> \)
+              programPath = programPath.replace(/\\\\/g, "\\");
+              // Split on both forward and back slashes and take the last segment
+              const file = programPath.split(/[/\\]+/).pop();
+              if (!file) return "Unknown";
+              // Strip extension if present
+              return file;
+          } catch (e) {
+              return "Unknown";
+          }
+      }
+
+      const readableStatus = parseProgramStatus(Program_Status);
+      const programName = extractProgramName(Program_Position);
+
+      // Return the exact shape you asked for
+      let result = {
+          Serial: '${Machine Name}',
+          ProgramName: programName,
+          ProgramState: readableStatus,
+          CycleTime: 0
+      };
+
+      let result_timestamp_optional = new Date(Math.max(Program_Status_timestamp, SIK_timestamp, Program_Position_timestamp, Status_timestamp));
+    transformationCodeFooter: |-
+      return {
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 14
+    transformations:
+    - sourceDataMapperPropertyId: 35
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 16
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 36
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 67
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 362
     name: COM Interface Version
     propertyLinks:

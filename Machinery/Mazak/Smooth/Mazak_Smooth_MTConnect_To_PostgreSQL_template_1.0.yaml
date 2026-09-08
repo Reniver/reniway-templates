@@ -64,7 +64,7 @@ connectors:
       targetBridgePropertyId: 90
       sourceDataMapperPropertyId: 48
     retain: false
-    queryString: INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+    queryString: INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::machine_mode, @State::machine_state);
     parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
     direction: Output
     type: json
@@ -364,24 +364,35 @@ dataMappers:
   - id: 43
     name: Insert Machine
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const program = msg.payload[38]
 
+      const program_timestamp = new Date(msg.timestamps[38]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Name': '${Machine Name}',
+          'Protocol': 'MT Connect',
+          'Model': '${Machine Model}',
+          'Manufacturer': 'Mazak'
+      };
 
-      let result = program;
-
-
+      let result_timestamp_optional = program_timestamp;
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Name': '${Machine Name}',
-              'Protocol': 'MT Connect',
-              'Model': '${Machine Model}',
-              'Manufacturer': 'Mazak'
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 13
+    transformations:
+    - sourceDataMapperPropertyId: 38
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 45
     name: estop
     propertyLinks:
@@ -409,14 +420,14 @@ dataMappers:
   - id: 48
     name: Observation Log
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const mode = msg.payload[46]
-
       const avail = msg.payload[47]
 
-
+      const mode_timestamp = new Date(msg.timestamps[46]);
+      const avail_timestamp = new Date(msg.timestamps[47]);
+    transformationCodeBody: |-
       let new_mode = 'Other';
-
       switch (mode) {
           case 'MANUAL':
               new_mode = "Manual";
@@ -428,9 +439,7 @@ dataMappers:
               new_mode = "Other";
       }
 
-
       let new_state = "NotConnected";
-
       switch (avail) {
           case 'NOT_AVAILABLE':
               new_state = "NotConnected";
@@ -444,17 +453,31 @@ dataMappers:
           case 'NOT_INITIALIZED':
               new_state = 'NotConnected';
       }
+      let result = {
+          'Serial': '${Machine Name}',
+          'Mode': new_mode,
+          'State': new_state
+      };
 
-
+      let result_timestamp_optional = new Date(Math.max(mode_timestamp, avail_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Mode': new_mode,
-              'State': new_state
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 15
+    transformations:
+    - sourceDataMapperPropertyId: 46
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 47
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 49
     name: Frapidovr
     propertyLinks:
@@ -482,24 +505,44 @@ dataMappers:
   - id: 52
     name: Override Log
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const Frapidovr = msg.payload[49]
-
       const Fovr = msg.payload[50]
-
       const Sovr = msg.payload[51]
 
+      const Frapidovr_timestamp = new Date(msg.timestamps[49]);
+      const Fovr_timestamp = new Date(msg.timestamps[50]);
+      const Sovr_timestamp = new Date(msg.timestamps[51]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Feed': parseInt(Fovr),
+          'Speed': parseInt(Sovr),
+          'Rapid': parseInt(Frapidovr)
+      };
 
+      let result_timestamp_optional = new Date(Math.max(Frapidovr_timestamp, Fovr_timestamp, Sovr_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Feed': parseInt(Fovr),
-              'Speed': parseInt(Sovr),
-              'Rapid': parseInt(Frapidovr)
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 16
+    transformations:
+    - sourceDataMapperPropertyId: 49
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 50
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 51
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 53
     name: doorstate
     propertyLinks:
@@ -511,19 +554,17 @@ dataMappers:
   - id: 54
     name: Alarm Log
     propertyLinks: []
-    transformationCodeBody: >
+    transformationCodeHeader: |-
       const estop = msg.payload[45];
-
       const doorstate = msg.payload[53];
 
-
+      const estop_timestamp = new Date(msg.timestamps[45]);
+      const doorstate_timestamp = new Date(msg.timestamps[53]);
+    transformationCodeBody: |-
       // Define rules for generating alarms based on input
-
       const alarms = [];
 
-
       // Example rule: E-Stop triggered
-
       if (estop !== "ARMED") {
           alarms.push({
               Code: "E-STOP-001",
@@ -534,9 +575,7 @@ dataMappers:
           });
       }
 
-
       // Example rule: Door open or unlatched
-
       if (doorstate === "UNLATCHED") {
           alarms.push({
               Code: "DOOR-001",
@@ -555,17 +594,31 @@ dataMappers:
           });
       }
 
-
       // Final structure (matches your original format)
+      let result = {
+          Serial: "${Machine Name}",
+          Alarms: alarms
+      };
 
+      let result_timestamp_optional = new Date(Math.max(estop_timestamp, doorstate_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              Serial: "${Machine Name}",
-              Alarms: alarms
-          }
+         value: result,
+         timestamp: result_timestamp_optional
       };
     type: json
+    kind: Transformation
     order: 17
+    transformations:
+    - sourceDataMapperPropertyId: 45
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 53
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 55
     name: execution
     propertyLinks:
@@ -585,26 +638,24 @@ dataMappers:
   - id: 63
     name: Program DataLog
     propertyLinks: []
-    transformationCodeBody: >-
+    transformationCodeHeader: |-
       const program = msg.payload[38]
-
       const subprogram = msg.payload[39]
-
       const total_time = parseFloat(msg.payload[40])
-
       const cut_time = parseFloat(msg.payload[41])
-
       const execution = msg.payload[55]
-
       const Status = msg.payload[57]
 
-
+      const program_timestamp = new Date(msg.timestamps[38]);
+      const subprogram_timestamp = new Date(msg.timestamps[39]);
+      const total_time_timestamp = new Date(msg.timestamps[40]);
+      const cut_time_timestamp = new Date(msg.timestamps[41]);
+      const execution_timestamp = new Date(msg.timestamps[55]);
+      const Status_timestamp = new Date(msg.timestamps[57]);
+    transformationCodeBody: |-
       let programState = execution;
-
       console.log(execution);
-
       console.log(Status);
-
 
       switch(programState) {
           case 'Finished':
@@ -635,15 +686,41 @@ dataMappers:
               programState = 'Error';
               break;
       }
+      let result = {
+          Serial: '${Machine Name}',
+          ProgramName: program + ' / ' + subprogram,
+          ProgramState: programState,
+          CycleTime: cut_time
+      };
 
-
+      let result_timestamp_optional = new Date(Math.max(program_timestamp, subprogram_timestamp, total_time_timestamp, cut_time_timestamp, execution_timestamp, Status_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              Serial: '${Machine Name}',
-              ProgramName: program + ' / ' + subprogram,
-              ProgramState: programState,
-              CycleTime: cut_time
-          }
+         value: result,
+         timestamp: result_timestamp_optional
       };
     type: json
+    kind: Transformation
     order: 14
+    transformations:
+    - sourceDataMapperPropertyId: 38
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 39
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 40
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 41
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 55
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 57
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime

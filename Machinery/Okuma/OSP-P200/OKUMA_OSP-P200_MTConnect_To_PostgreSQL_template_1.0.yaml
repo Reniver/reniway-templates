@@ -52,7 +52,7 @@ connectors:
       sourceDataMapperPropertyId: 21
     retain: false
     queryString: >
-      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::machine_mode, @State::machine_state);
     parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
     direction: Output
     type: json
@@ -511,27 +511,45 @@ dataMappers:
   - id: 20
     name: Insert Machine
     propertyLinks: []
-    transformationCodeBody: |-
+    transformationCodeHeader: |-
       const Mode = msg.payload[11]
 
+      const Mode_timestamp = new Date(msg.timestamps[11]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Name': '${Machine Name}',
+          'Protocol': 'MTConnect',
+          'Model': '${Machine Model}',
+          'Manufacturer': 'Okuma'
+      };
+
+      let result_timestamp_optional = Mode_timestamp;
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Name': '${Machine Name}',
-              'Protocol': 'MTConnect',
-              'Model': '${Machine Model}',
-              'Manufacturer': 'Okuma'
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 17
+    transformations:
+    - sourceDataMapperPropertyId: 11
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 21
     name: Insert Observation
     propertyLinks: []
-    transformationCodeBody: |-
+    transformationCodeHeader: |-
       const Mode = msg.payload[11]
       const Availability = msg.payload[10]
 
+      const Mode_timestamp = new Date(msg.timestamps[11]);
+      const Availability_timestamp = new Date(msg.timestamps[10]);
+    transformationCodeBody: |-
       // Map MTConnect ControllerMode to the machine_mode enum
       let mode = 'Other';
       switch (Mode) {
@@ -552,41 +570,78 @@ dataMappers:
 
       // MTConnect Availability drives the machine_state enum
       let state = (Availability === 'AVAILABLE') ? 'Available' : 'NotConnected';
+      let result = {
+          'Serial': '${Machine Name}',
+          'Mode': mode,
+          'State': state
+      };
 
+      let result_timestamp_optional = new Date(Math.max(Mode_timestamp, Availability_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Mode': mode,
-              'State': state
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 18
+    transformations:
+    - sourceDataMapperPropertyId: 11
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 10
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 22
     name: Insert Overrides
     propertyLinks: []
-    transformationCodeBody: |-
-      const Feed = parseInt(msg.payload[14])
-      const Speed = parseInt(msg.payload[15])
+    transformationCodeHeader: |-
+      const Feed_Override = parseInt(msg.payload[14])
+      const Spindle_Override = parseInt(msg.payload[15])
 
+      const Feed_Override_timestamp = new Date(msg.timestamps[14]);
+      const Spindle_Override_timestamp = new Date(msg.timestamps[15]);
+    transformationCodeBody: |-
       // The Okuma MTConnect device exposes no rapid-traverse override, so Rapid is 0.
+      let result = {
+          'Serial': '${Machine Name}',
+          'Feed': isNaN(Feed_Override) ? 0 : Feed_Override,
+          'Speed': isNaN(Spindle_Override) ? 0 : Spindle_Override,
+          'Rapid': 0
+      };
+
+      let result_timestamp_optional = new Date(Math.max(Feed_Override_timestamp, Spindle_Override_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Feed': isNaN(Feed) ? 0 : Feed,
-              'Speed': isNaN(Speed) ? 0 : Speed,
-              'Rapid': 0
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 19
+    transformations:
+    - sourceDataMapperPropertyId: 14
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 15
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 23
     name: Program Data Log
     propertyLinks: []
-    transformationCodeBody: |-
+    transformationCodeHeader: |-
       const Program = msg.payload[13]
       const Execution = msg.payload[12]
 
+      const Program_timestamp = new Date(msg.timestamps[13]);
+      const Execution_timestamp = new Date(msg.timestamps[12]);
+    transformationCodeBody: |-
       // Map MTConnect Execution to the program_state enum
       let programState = 'Idle';
       switch (Execution) {
@@ -618,34 +673,72 @@ dataMappers:
       if (!name) name = 'Unknown';
 
       // The Okuma MTConnect device exposes no cycle-time data item here, so CycleTime is 0.
+      let result = {
+          Serial: '${Machine Name}',
+          ProgramName: name,
+          ProgramState: programState,
+          CycleTime: 0
+      };
+
+      let result_timestamp_optional = new Date(Math.max(Program_timestamp, Execution_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              Serial: '${Machine Name}',
-              ProgramName: name,
-              ProgramState: programState,
-              CycleTime: 0
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 20
+    transformations:
+    - sourceDataMapperPropertyId: 13
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 12
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 24
     name: Insert Alarms
     propertyLinks: []
+    transformationCodeHeader: |-
+      const Cond_System = msg.payload[50];
+      const Cond_Coolant = msg.payload[51];
+      const Cond_Electric = msg.payload[52];
+      const Cond_Hydraulic = msg.payload[53];
+      const Cond_Lubrication = msg.payload[54];
+      const Cond_Pneumatic = msg.payload[55];
+      const Cond_Loader = msg.payload[56];
+      const Cond_WasteDisposal = msg.payload[57];
+      const Cond_ToolingDelivery = msg.payload[58];
+      const Cond_BarFeeder = msg.payload[59];
+
+      const Cond_System_timestamp = new Date(msg.timestamps[50]);
+      const Cond_Coolant_timestamp = new Date(msg.timestamps[51]);
+      const Cond_Electric_timestamp = new Date(msg.timestamps[52]);
+      const Cond_Hydraulic_timestamp = new Date(msg.timestamps[53]);
+      const Cond_Lubrication_timestamp = new Date(msg.timestamps[54]);
+      const Cond_Pneumatic_timestamp = new Date(msg.timestamps[55]);
+      const Cond_Loader_timestamp = new Date(msg.timestamps[56]);
+      const Cond_WasteDisposal_timestamp = new Date(msg.timestamps[57]);
+      const Cond_ToolingDelivery_timestamp = new Date(msg.timestamps[58]);
+      const Cond_BarFeeder_timestamp = new Date(msg.timestamps[59]);
     transformationCodeBody: |-
       // The MTConnect connector publishes each Condition's level (e.g. "Normal",
       // "Warning", "Fault", "Unavailable") as the property value. nativeCode/text are
       // not exposed per property, so we raise one alarm per subsystem that is not Normal.
       const subsystems = [
-          { src: 'System',          v: msg.payload[50] },
-          { src: 'Coolant',         v: msg.payload[51] },
-          { src: 'Electric',        v: msg.payload[52] },
-          { src: 'Hydraulic',       v: msg.payload[53] },
-          { src: 'Lubrication',     v: msg.payload[54] },
-          { src: 'Pneumatic',       v: msg.payload[55] },
-          { src: 'Loader',          v: msg.payload[56] },
-          { src: 'WasteDisposal',   v: msg.payload[57] },
-          { src: 'ToolingDelivery', v: msg.payload[58] },
-          { src: 'BarFeeder',       v: msg.payload[59] }
+          { src: 'System',          v: Cond_System },
+          { src: 'Coolant',         v: Cond_Coolant },
+          { src: 'Electric',        v: Cond_Electric },
+          { src: 'Hydraulic',       v: Cond_Hydraulic },
+          { src: 'Lubrication',     v: Cond_Lubrication },
+          { src: 'Pneumatic',       v: Cond_Pneumatic },
+          { src: 'Loader',          v: Cond_Loader },
+          { src: 'WasteDisposal',   v: Cond_WasteDisposal },
+          { src: 'ToolingDelivery', v: Cond_ToolingDelivery },
+          { src: 'BarFeeder',       v: Cond_BarFeeder }
       ];
 
       const isActive = (lvl) => {
@@ -662,12 +755,51 @@ dataMappers:
           Severity: severityFor(x.v),
           Time: new Date().toISOString()
       }));
+      let result = {
+          Serial: '${Machine Name}',
+          Alarms: alarms
+      };
 
+      let result_timestamp_optional = new Date(Math.max(Cond_System_timestamp, Cond_Coolant_timestamp, Cond_Electric_timestamp, Cond_Hydraulic_timestamp, Cond_Lubrication_timestamp, Cond_Pneumatic_timestamp, Cond_Loader_timestamp, Cond_WasteDisposal_timestamp, Cond_ToolingDelivery_timestamp, Cond_BarFeeder_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              Serial: '${Machine Name}',
-              Alarms: alarms
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 21
+    transformations:
+    - sourceDataMapperPropertyId: 50
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 51
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 52
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 53
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 54
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 55
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 56
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 57
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 58
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 59
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime

@@ -53,7 +53,7 @@ connectors:
       sourceDataMapperPropertyId: 21
     retain: false
     queryString: >
-      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::Mode, @State::State);
+      INSERT INTO observation_log VALUES (@Serial, NOW(), @Mode::machine_mode, @State::machine_state);
     parameters: '{"Serial":"Text","Mode":"Text","State":"Text"}'
     direction: Output
     type: json
@@ -432,27 +432,45 @@ dataMappers:
   - id: 20
     name: Insert Machine
     propertyLinks: []
-    transformationCodeBody: |-
+    transformationCodeHeader: |-
       const Mode = msg.payload[10]
 
+      const Mode_timestamp = new Date(msg.timestamps[10]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Name': '${Machine Name}',
+          'Protocol': 'FANUC',
+          'Model': '${Machine Model}',
+          'Manufacturer': '${Machine Manufacturer}'
+      };
+
+      let result_timestamp_optional = Mode_timestamp;
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Name': '${Machine Name}',
-              'Protocol': 'FANUC',
-              'Model': '${Machine Model}',
-              'Manufacturer': '${Machine Manufacturer}'
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 10
+    transformations:
+    - sourceDataMapperPropertyId: 10
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 21
     name: Insert Observation
     propertyLinks: []
-    transformationCodeBody: |-
+    transformationCodeHeader: |-
       const Mode = msg.payload[10]
       const Execution = msg.payload[11]
 
+      const Mode_timestamp = new Date(msg.timestamps[10]);
+      const Execution_timestamp = new Date(msg.timestamps[11]);
+    transformationCodeBody: |-
       // Map FANUC mode (cnc_statinfo.aut) to the machine_mode enum
       let mode = 'Other';
       switch (Mode) {
@@ -473,42 +491,84 @@ dataMappers:
       // We only receive data while polling succeeds, so the control is reachable.
       // Map to the machine_state enum based on availability.
       let state = (Execution === 'UNAVAILABLE') ? 'NotConnected' : 'Available';
+      let result = {
+          'Serial': '${Machine Name}',
+          'Mode': mode,
+          'State': state
+      };
 
+      let result_timestamp_optional = new Date(Math.max(Mode_timestamp, Execution_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Mode': mode,
-              'State': state
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 11
+    transformations:
+    - sourceDataMapperPropertyId: 10
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 11
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 22
     name: Insert Overrides
     propertyLinks: []
-    transformationCodeBody: |-
-      const Feed = parseInt(msg.payload[13])
-      const Speed = parseInt(msg.payload[14])
-      const Rapid = parseInt(msg.payload[15])
+    transformationCodeHeader: |-
+      const Feed_Override = parseInt(msg.payload[13])
+      const Spindle_Override = parseInt(msg.payload[14])
+      const Rapid_Override = parseInt(msg.payload[15])
 
+      const Feed_Override_timestamp = new Date(msg.timestamps[13]);
+      const Spindle_Override_timestamp = new Date(msg.timestamps[14]);
+      const Rapid_Override_timestamp = new Date(msg.timestamps[15]);
+    transformationCodeBody: |-
+      let result = {
+          'Serial': '${Machine Name}',
+          'Feed': isNaN(Feed_Override) ? 0 : Feed_Override,
+          'Speed': isNaN(Spindle_Override) ? 0 : Spindle_Override,
+          'Rapid': isNaN(Rapid_Override) ? 0 : Rapid_Override
+      };
+
+      let result_timestamp_optional = new Date(Math.max(Feed_Override_timestamp, Spindle_Override_timestamp, Rapid_Override_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              'Serial': '${Machine Name}',
-              'Feed': isNaN(Feed) ? 0 : Feed,
-              'Speed': isNaN(Speed) ? 0 : Speed,
-              'Rapid': isNaN(Rapid) ? 0 : Rapid
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 12
+    transformations:
+    - sourceDataMapperPropertyId: 13
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 14
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 15
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 23
     name: Program Data Log
     propertyLinks: []
-    transformationCodeBody: |-
-      const ProgramName = msg.payload[16]
+    transformationCodeHeader: |-
+      const Program_Name = msg.payload[16]
       const Execution = msg.payload[11]
-      const CycleTime = parseInt(msg.payload[17])
+      const Cycle_Time = parseInt(msg.payload[17])
 
+      const Program_Name_timestamp = new Date(msg.timestamps[16]);
+      const Execution_timestamp = new Date(msg.timestamps[11]);
+      const Cycle_Time_timestamp = new Date(msg.timestamps[17]);
+    transformationCodeBody: |-
       // Map FANUC execution state to the program_state enum
       let programState = 'Idle';
       switch (Execution) {
@@ -536,25 +596,45 @@ dataMappers:
       }
 
       // Keep only the file name (strip any path/drive)
-      let name = (ProgramName || '').toString().split(/[/\\]+/).pop();
+      let name = (Program_Name || '').toString().split(/[/\\]+/).pop();
       if (!name) name = 'Unknown';
+      let result = {
+          Serial: '${Machine Name}',
+          ProgramName: name,
+          ProgramState: programState,
+          CycleTime: isNaN(Cycle_Time) ? 0 : Cycle_Time
+      };
 
+      let result_timestamp_optional = new Date(Math.max(Program_Name_timestamp, Execution_timestamp, Cycle_Time_timestamp));
+    transformationCodeFooter: |-
       return {
-          value: {
-              Serial: '${Machine Name}',
-              ProgramName: name,
-              ProgramState: programState,
-              CycleTime: isNaN(CycleTime) ? 0 : CycleTime
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 13
+    transformations:
+    - sourceDataMapperPropertyId: 16
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 11
+      triggersTransformation: true
+      isValueRequired: true
+    - sourceDataMapperPropertyId: 17
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
   - id: 24
     name: Insert Alarms
     propertyLinks: []
-    transformationCodeBody: |-
+    transformationCodeHeader: |-
       const Alarms = msg.payload[18]
 
+      const Alarms_timestamp = new Date(msg.timestamps[18]);
+    transformationCodeBody: |-
       // The FANUC connector publishes a JSON array of:
       //   { AxisCode, Axis, Number, Message, TypeCode, Type, Id }
       let parsed = [];
@@ -592,12 +672,24 @@ dataMappers:
           Severity: severityForType(a.Type),
           Time: new Date().toISOString()
       }));
+      let result = {
+          Serial: '${Machine Name}',
+          Alarms: alarms
+      };
 
+      let result_timestamp_optional = Alarms_timestamp;
+    transformationCodeFooter: |-
       return {
-          value: {
-              Serial: '${Machine Name}',
-              Alarms: alarms
-          }
-      }
+         value: result,
+         timestamp: result_timestamp_optional
+      };
     type: json
+    kind: Transformation
     order: 14
+    transformations:
+    - sourceDataMapperPropertyId: 18
+      triggersTransformation: true
+      isValueRequired: true
+    mergeInputs: []
+    includeTriggerTimestamp: false
+    triggerTimestampPropertyName: TriggerTime
