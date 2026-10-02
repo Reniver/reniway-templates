@@ -18,9 +18,6 @@ download), then **manually editing** the YAML to generalise it — most importan
 **replacement labels** (see below). Import is the reverse (Flows page menu → upload).
 
 Reference docs: https://docs.reniver.eu/reniway/flows/templates
-Server-side import/export logic: `reniwayv2/Reniway2/Managers/TemplateManager.cs`
-Label replacement (client-side): `reniway-ui-v2` →
-`src/app/pages/flow/upload-flow-template-modal/upload-flow-template-modal.component.ts`
 
 ## Your goal
 
@@ -39,10 +36,11 @@ database, replace the SQL connector with the appropriate enterprise connector an
 transformation `value` to that sink instead.
 
 When asked for a new machine:
-1. Find the field connector implementation in `reniwayv2/Reniway2/BridgeConnectors/<Name>BridgeConnector/`
-   to learn **exactly which bridge properties it produces** and their **names, types and value vocabulary**.
-2. Find the connector's `type` string in `reniwayv2/Reniway2/Models/Enums.cs` (the `BridgeTypes` enum
-   `EnumMember` value — e.g. `HEIDENHAIN`, `MTConnect`, `FanucFOCASBridge`).
+1. Learn **exactly which properties the field connector produces** and their **names, types and value
+   vocabulary** — best from a flow exported from a Reniway Edge instance connected to that machine, or
+   from an existing template that uses the same connector.
+2. Use the connector's exact `type` string as it appears in an exported flow or existing template
+   (e.g. `HEIDENHAIN`, `MTConnect`, `FanucFOCASBridge`).
 3. Copy the structure of the closest existing `*_To_PostgreSQL_template_*.yaml` and rewrite the field
    connector + data-mapper transformations for the new machine. Keep the enterprise (SQL) connector
    and its query strings identical so the target schema stays the same.
@@ -110,9 +108,6 @@ labels you actually reference.
 
 ## The standard CNC PostgreSQL target schema
 
-**Source of truth:** `database-schemas/cnc/cnc_create_database.sql` (in this workspace). Read it
-whenever you need exact table columns, enum members or function signatures.
-
 Keep the enterprise (SQL) connector identical to the existing templates. It writes to these tables
 via output properties whose `queryString` is fixed; only the **data-mapper transformations feeding
 them** change per machine:
@@ -127,7 +122,7 @@ them** change per machine:
   `{Code, Message, Source, Severity, Time}`. The function de-duplicates active alarms and emits a
   deactivation row when an alarm clears, so just send the **currently-active** alarm set each cycle.
 
-**Allowed enum values** (from `cnc_create_database.sql`, case-sensitive — your transformations must
+**Allowed enum values** (case-sensitive — your transformations must
 output exactly these):
 - `machine_mode`: `Manual`, `MDI`, `RFP`, `SingleStep`, `Automatic`, `Other`, `Handwheel`
 - `machine_state`: `NotConnected`, `Connected`, `Booted`, `Initializing`, `Available`, `ShuttingDown`
@@ -179,7 +174,7 @@ controls a section's order differs between node types — and this is a sharp ed
   (added as a batch), so their vertical order = `order:`.
 - **Data-mapper *transformations*** (props with `transformationCodeBody`) have their `order`
   **reassigned on import** to insertion sequence — i.e. the **order they are declared in the YAML
-  array**. Their `order:` value is ignored. (See `DataMapperManager.AddProperty`: `Order = max+1`.)
+  array**. Their `order:` value is ignored.
 
 So to keep `mapper transformations → SQL outputs` uncrossed, the **declaration order of the
 transformation blocks in the YAML** must match the **`order:` sequence of the SQL output properties**
@@ -209,19 +204,17 @@ this wrong and the connector silently creates duplicate properties and nothing f
   like `StateData_Mode`, `StateData_Override_FeedOverride`, `ProductionData_Executing_Name`,
   `ProductionData_Timers_CycleTimeMs`, `Alarms`. The field-connector property `name` in the template
   **must equal that generated name exactly** — do **not** prefix it with `${Machine Name}` and do not
-  rename it. (On Load the connector does
-  `if (!_bridge.Properties.Exists(bp => bp.Name.Equals(name)))` and on poll
-  `_bridge.Properties.Find(bp => bp.Name.Equals(name))`.) You may still give the data-mapper
-  properties friendly names — only the field connector's property names are constrained.
+  rename it. You may still give the data-mapper properties friendly names — only the field
+  connector's property names are constrained.
 
-Always read the connector's `Load`/`Poll`/`HandleData` (and `DefaultSettings`) before writing the
-field connector block, to confirm the match key, the property names/types, and the settings keys.
+Always check an exported flow or existing template for the same connector before writing the field
+connector block, to confirm the match key, the property names/types, and the settings keys.
 
 ## Checklist before finishing
 
 - [ ] `labels:` declares every `${...}` you use, and nothing you don't.
-- [ ] Field connector `type` matches the `BridgeTypes` `EnumMember` value; `connectorCategoryType: Field`.
-- [ ] Field connector settings keys match the connector's `DefaultSettings` (host/port/feature flags).
+- [ ] Field connector `type` matches the connector's exact type string; `connectorCategoryType: Field`.
+- [ ] Field connector settings keys match those of an exported flow for that connector (host/port/feature flags).
 - [ ] Field connector property names match the connector's match key (name / address / dataItemId).
 - [ ] Every transformation produces only the **allowed enum values** for Mode/State/program_state.
 - [ ] SQL connector query strings + parameters are unchanged from the reference template.
